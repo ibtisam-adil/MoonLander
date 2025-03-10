@@ -4,20 +4,18 @@
 // Constants
 const int SCREEN_WIDTH = 1280;
 const int SCREEN_HEIGHT = 720;
-const float GRAVITY = 0.1f;
+const float GRAVITY = 0.01f;
+const float FORWARD_SPEED = 1.0f;
 const float ROTATION_SPEED = 5.0f;
 const float MAX_SPEED = 5.0f;
 
 // ------------------------------ Airplane Methods ------------------------------
-// Gravity effect
 void Airplane::applyGravity() {
     vy += GRAVITY;
 }
 
-// Update position
 void Airplane::update() {
-    // Apply velocity to position
-    x += vx;
+    x += FORWARD_SPEED;
     y += vy;
 
     // Prevent plane from falling out of screen
@@ -28,14 +26,13 @@ void Airplane::update() {
 void Airplane::rotate(bool left) {
     angle += left ? -ROTATION_SPEED : ROTATION_SPEED;
 
-    // Limit rotation range (optional)
     if (angle < -30) angle = -30;
     if (angle > 30) angle = 30;
 
-    // Adjust velocity based on angle (simple physics)
-    vx = angle * 0.05f;  // Small horizontal drift
+    // Adjust vertical velocity based on angle (simple physics)
     vy += angle * 0.02f; // Affect descent
 }
+
 
 // ------------------------------ Game Class Methods ------------------------------
 Game::Game() : window(nullptr), renderer(nullptr), running(false) {
@@ -80,14 +77,13 @@ void Game::handleInput() {
     }
 }
 
-// Update physics and game logic
 void Game::update() {
     plane.applyGravity();
     plane.update();
 
     // Check if plane has landed
     if (plane.y >= SCREEN_HEIGHT - 100) {
-        running = false;  // Game over
+        running = false;  
         std::cout << "Game Over! Plane landed/crashed." << std::endl;
     }
 }
