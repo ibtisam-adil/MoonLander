@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL.h>
+#include <SDL_image.h>
 
 // Airplane structure
 struct Airplane {
@@ -28,6 +29,7 @@ public:
 private:
     SDL_Window* window;
     SDL_Renderer* renderer;
+    SDL_Texture* airplaneTexture;
     bool running;
     Airplane plane;
 };
