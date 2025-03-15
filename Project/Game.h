@@ -7,10 +7,15 @@ struct Airplane {
     float x, y;    // Position
     float vx, vy;  // Velocity
     float angle;   // Rotation angle
+    bool landingGear = false;
+
+    Airplane() : x(0), y(0), vx(0), vy(0), angle(0), landingGear(false) {}
 
     void applyGravity();
     void update();
     void rotate(bool left);
+    void throttleUp();
+    void applyFlaps();
 };
 
 // Game class
