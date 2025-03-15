@@ -87,7 +87,7 @@ bool Game::init() {
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) return false;
 
     // Load airplane texture
-    SDL_Surface* loadedSurface = IMG_Load("C:/Users/Student/Desktop/plane_2_blue.png");
+    SDL_Surface* loadedSurface = IMG_Load("assets/plane_2_blue.png");
     if (!loadedSurface) {
         std::cout << "Error loading texture: " << IMG_GetError() << std::endl;
         return false;
@@ -146,7 +146,6 @@ void Game::render() {
     SDL_RenderPresent(renderer);
 }
 
-
 //void Game::render() {
 //    SDL_SetRenderDrawColor(renderer, 0, 0, 30, 255);
 //    SDL_RenderClear(renderer);
@@ -191,8 +190,6 @@ void Game::render() {
 //
 //    SDL_RenderPresent(renderer);
 //}
-
-
 
 // Game loop
 void Game::run() {
