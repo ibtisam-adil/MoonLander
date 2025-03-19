@@ -96,21 +96,28 @@ private:
 
     void adjustPoints() {
         float minX = points[0].x, maxX = points[0].x;
+        float minY = points[0].y, maxY = points[0].y;
 
+        // Scale and track min/max Y values
         for (auto& p : points) {
             p.x *= scale;
-            p.y = SCREEN_HEIGHT - (p.y * scale);
+            p.y *= scale;
             if (p.x < minX) minX = p.x;
             if (p.x > maxX) maxX = p.x;
+            if (p.y < minY) minY = p.y;
+            if (p.y > maxY) maxY = p.y;
         }
 
-        // Shift all points so the leftmost one is at x = 0
+        // Shift all points so that the lowest point (maxY) touches the bottom of the screen
+        float yOffset = SCREEN_HEIGHT - maxY;
         for (auto& p : points) {
-            p.x -= minX;
+            p.x -= minX;  // Align leftmost point to x = 0
+            p.y += yOffset; // Shift down so the lowest point is at SCREEN_HEIGHT
         }
 
         rightEdge = maxX - minX;
     }
+
 
     void generateLines() {
         for (size_t i = 1; i < points.size(); i++) {
