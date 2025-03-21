@@ -43,27 +43,28 @@ public:
 	}
 
 	void handleInput(const Uint8* keys) {
-		if (keys[SDL_SCANCODE_LEFT] && angle > -90) {
-			angle -= ROTATION_SPEED;
+		if (keys[SDL_SCANCODE_LEFT]) {
+			angle = fmax(angle - ROTATION_SPEED, -90.0f);
 		}
-		if (keys[SDL_SCANCODE_RIGHT] && angle < 90) {
-			angle += ROTATION_SPEED;
+		if (keys[SDL_SCANCODE_RIGHT]) {
+			angle = fmin(angle + ROTATION_SPEED, 90.0f);
 		}
 		if (keys[SDL_SCANCODE_UP]) {
-			// Apply thrust in the rocket's direction
+			// Convert angle to radians
 			float radian = angle * M_PI / 180.0f;
-			velocity.x += -sin(radian) * THRUST_POWER;
-			velocity.y += -cos(radian) * THRUST_POWER;
+			velocity.x += sin(radian) * THRUST_POWER;
+			velocity.y -= cos(radian) * THRUST_POWER;
 		}
 	}
 
 	void update() {
 		if (!landed) {
-			velocity.y += GRAVITY; // Apply gravity
+			velocity.y += GRAVITY;  // Gravity always affects downward motion
 			position.x += velocity.x;
 			position.y += velocity.y;
 		}
 	}
+
 
 	void render() {
 		if (!texture) return;
