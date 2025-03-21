@@ -3,13 +3,93 @@
 #include <vector>
 #include <cmath>
 #include <cstdlib>
+#include <SDL_image.h>
 
 const int SCREEN_WIDTH = 1200;
 const int SCREEN_HEIGHT = 800;
-const int LINE_THICKNESS = 1; // Adjust as needed
+const int LINE_THICKNESS = 1;
+const float GRAVITY = 0.02f;  // Gravity effect
+const float THRUST_POWER = 0.05f; // Upward thrust
+const float ROTATION_SPEED = 2.0f; // Degrees per frame
 
 struct Vector2 {
 	float x, y;
+};
+
+class Rocket {
+public:
+	Vector2 position;
+	Vector2 velocity;
+	float angle; // Rotation angle (-90 to +90)
+	SDL_Texture* texture;
+	SDL_Renderer* renderer;
+	bool landed;
+
+	Rocket(SDL_Renderer* renderer) : renderer(renderer), texture(nullptr), landed(false) {
+		position = { SCREEN_WIDTH / 2.0f, 100 };  // Start in the air
+		velocity = { 0, 0 };
+		angle = 0.0f;
+	}
+
+	bool loadTexture(const char* path) {
+		SDL_Surface* surface = IMG_Load(path);
+		if (!surface) {
+			printf("Failed to load rocket image: %s\n", IMG_GetError());
+			return false;
+		}
+		texture = SDL_CreateTextureFromSurface(renderer, surface);
+		SDL_FreeSurface(surface);
+		return texture != nullptr;
+	}
+
+	void handleInput(const Uint8* keys) {
+		if (keys[SDL_SCANCODE_LEFT] && angle > -90) {
+			angle -= ROTATION_SPEED;
+		}
+		if (keys[SDL_SCANCODE_RIGHT] && angle < 90) {
+			angle += ROTATION_SPEED;
+		}
+		if (keys[SDL_SCANCODE_UP]) {
+			// Apply thrust in the rocket's direction
+			float radian = angle * M_PI / 180.0f;
+			velocity.x += -sin(radian) * THRUST_POWER;
+			velocity.y += -cos(radian) * THRUST_POWER;
+		}
+	}
+
+	void update() {
+		if (!landed) {
+			velocity.y += GRAVITY; // Apply gravity
+			position.x += velocity.x;
+			position.y += velocity.y;
+		}
+	}
+
+	void render() {
+		if (!texture) return;
+
+		SDL_Rect destRect = { (int)position.x - 10, (int)position.y - 20, 20, 40 }; // Smaller size
+		SDL_RenderCopyEx(renderer, texture, nullptr, &destRect, angle, nullptr, SDL_FLIP_NONE);
+	}
+
+
+	void checkLanding(bool landable) {
+		if (position.y >= SCREEN_HEIGHT - 50) {
+			if (fabs(angle) <= 5 && landable) {
+				landed = true;  // Safe landing
+				velocity = { 0, 0 };  // Stop movement
+				printf("Landed successfully!\n");
+			}
+			else {
+				printf("Crash! Game Over\n");
+			}
+		}
+	}
+
+
+	void cleanup() {
+		if (texture) SDL_DestroyTexture(texture);
+	}
 };
 
 struct LandscapeLine {
@@ -195,9 +275,16 @@ int main(int argc, char* argv[]) {
 	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
 	Landscape landscape(SCREEN_WIDTH);
+	Rocket rocket(renderer);
+	if (!rocket.loadTexture("C:/Users/ibtis/OneDrive/Desktop/SDL2_Project/AirplaneLanding/Project/assets/rocket.png")) {
+		SDL_Quit();
+		return -1;
+	}
 
 	bool running = true;
 	SDL_Event event;
+	const Uint8* keys = SDL_GetKeyboardState(NULL);
+
 	int viewX = 0;
 
 	while (running) {
@@ -205,15 +292,22 @@ int main(int argc, char* argv[]) {
 			if (event.type == SDL_QUIT) running = false;
 		}
 
+		rocket.handleInput(keys);
+		rocket.update();
+		rocket.checkLanding(true);
+
+
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
 
 		landscape.render(renderer, viewX);
+		rocket.render();
 
 		SDL_RenderPresent(renderer);
-		SDL_Delay(16); // Simulate 60 FPS
+		SDL_Delay(16);
 	}
 
+	rocket.cleanup();
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
