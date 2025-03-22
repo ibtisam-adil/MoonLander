@@ -4,6 +4,8 @@
 #include <cmath>
 #include <cstdlib>
 #include <SDL_image.h>
+#include <iostream>
+#include <span>
 
 const int SCREEN_WIDTH = 1200;
 const int SCREEN_HEIGHT = 800;
@@ -16,63 +18,8 @@ struct Vector2 {
 	float x, y;
 };
 
-class Rocket {
-public:
-	Vector2 position;
-	Vector2 velocity;
-	float angle;
-	SDL_Texture* texture;
-	SDL_Renderer* renderer;
-	bool landed;
-
-	Rocket(SDL_Renderer* renderer) : renderer(renderer), texture(nullptr), landed(false) {
-		position = { SCREEN_WIDTH / 2.0f, 100 };  // Start in the air
-		velocity = { 0, 0 };
-		angle = 0.0f;
-	}
-
-	~Rocket() { cleanup(); }
-
-	bool loadTexture(const char* path) {
-		SDL_Surface* surface = IMG_Load(path);
-		if (!surface) {
-			printf("Failed to load rocket image: %s\n", IMG_GetError());
-			return false;
-		}
-		texture = SDL_CreateTextureFromSurface(renderer, surface);
-		SDL_FreeSurface(surface);
-		return texture != nullptr;
-	}
-
-	void handleInput(const Uint8* keys) {
-		if (keys[SDL_SCANCODE_LEFT]) angle = std::max(angle - ROTATION_SPEED, -90.0f);
-		if (keys[SDL_SCANCODE_RIGHT]) angle = std::min(angle + ROTATION_SPEED, 90.0f);
-		if (keys[SDL_SCANCODE_UP]) {
-			float radian = angle * M_PI / 180.0f;
-			velocity.x += std::sin(radian) * THRUST_POWER;
-			velocity.y -= std::cos(radian) * THRUST_POWER;
-		}
-	}
-
-	void update() {
-		if (!landed) {
-			velocity.y += GRAVITY;  // Gravity always affects downward motion
-			position.x += velocity.x;
-			position.y += velocity.y;
-		}
-	}
-
-
-	void render() {
-		if (!texture) return;
-
-		SDL_Rect destRect = { (int)position.x - 10, (int)position.y - 20, 20, 40 }; // Smaller size
-		SDL_RenderCopyEx(renderer, texture, nullptr, &destRect, angle, nullptr, SDL_FLIP_NONE);
-	}
-
-	void cleanup() {
-		if (texture) SDL_DestroyTexture(texture);
-	}
+struct Star {
+	float x, y;
 };
 
 struct LandscapeLine {
@@ -81,10 +28,6 @@ struct LandscapeLine {
 	int multiplier;
 
 	LandscapeLine(Vector2 a, Vector2 b) : p1(a), p2(b), landable(a.y == b.y), multiplier(1) {}
-};
-
-struct Star {
-	float x, y;
 };
 
 class Landscape {
@@ -181,9 +124,9 @@ private:
 			{470.0, 300.0}, {475.0, 290.0}, {480.0, 285.0}, {485.0, 280.0}, {490.0, 275.0},
 
 			//// Final landing platform at the bottom
-			{530.0, 325.0}, {538.0, 325.0}, 
-			
-			{550.0, 300.0}, {555.0, 302.0}, {560.0, 304.0}, {565.0, 295.0}, {570.0, 300.0}, 
+			{530.0, 325.0}, {538.0, 325.0},
+
+			{550.0, 300.0}, {555.0, 302.0}, {560.0, 304.0}, {565.0, 295.0}, {570.0, 300.0},
 			{575.0, 302.0}, {580.0, 304.0}, {585.0, 295.0}, {589.0, 295.0}, {592.0, 300.0},
 			{595.0, 302.0}, {598.0, 304.0}, {601.0, 295.0}, {607.0, 295.0}, {609.0, 300.0}
 		};
@@ -248,6 +191,121 @@ private:
 	}
 };
 
+class Rocket {
+public:
+	Vector2 position;
+	Vector2 velocity;
+	float angle;
+	SDL_Texture* texture;
+	SDL_Renderer* renderer;
+	bool landed;
+	bool hasLandedOrCrashed;
+
+
+	Rocket(SDL_Renderer* renderer) : renderer(renderer), texture(nullptr),
+		landed(false), hasLandedOrCrashed(false)
+	{
+		position = { SCREEN_WIDTH / 2.0f, 100 };  // Start in the air
+		velocity = { 0, 0 };
+		angle = 0.0f;
+	}
+
+	~Rocket() { cleanup(); }
+
+	bool loadTexture(const char* path) {
+		SDL_Surface* surface = IMG_Load(path);
+		if (!surface) {
+			printf("Failed to load rocket image: %s\n", IMG_GetError());
+			return false;
+		}
+		texture = SDL_CreateTextureFromSurface(renderer, surface);
+		SDL_FreeSurface(surface);
+		return texture != nullptr;
+	}
+
+	void handleInput(const Uint8* keys) {
+		if (keys[SDL_SCANCODE_LEFT]) angle = std::max(angle - ROTATION_SPEED, -90.0f);
+		if (keys[SDL_SCANCODE_RIGHT]) angle = std::min(angle + ROTATION_SPEED, 90.0f);
+		if (keys[SDL_SCANCODE_UP]) {
+			float radian = angle * M_PI / 180.0f;
+			velocity.x += std::sin(radian) * THRUST_POWER;
+			velocity.y -= std::cos(radian) * THRUST_POWER;
+		}
+	}
+
+	void checkCollision(const std::vector<LandscapeLine>& lines) {
+		if (hasLandedOrCrashed) return;
+
+		for (const auto& line : lines) {
+			if (lineIntersectsRocket(line)) {
+				if (line.landable && fabs(angle) <= 15.0f && velocity.y < 15.0f) {
+					land();  // Safe landing
+				}
+				else {
+					crash(); // Crashes if not a landing zone or bad landing
+				}
+				return; // Stop checking after the first collision
+			}
+		}
+	}
+
+
+	bool lineIntersectsRocket(const LandscapeLine& line) {
+		Vector2 bottomLeft = { position.x - 10, position.y + 20 };
+		Vector2 bottomRight = { position.x + 10, position.y + 20 };
+
+		return pointIsBelowLine(bottomLeft, line) || pointIsBelowLine(bottomRight, line);
+	}
+
+	bool pointIsBelowLine(const Vector2& point, const LandscapeLine& line) {
+		float t = (point.x - line.p1.x) / (line.p2.x - line.p1.x);
+		if (t < 0 || t > 1) return false;
+
+		float yOnLine = line.p1.y + t * (line.p2.y - line.p1.y);
+		return point.y >= yOnLine;
+	}
+
+	void land() {
+		if (landed) return; // Avoid multiple landings
+
+		velocity = { 0, 0 };
+		landed = true;
+		std::cout << "Plane Landed Safely" << std::endl;
+	}
+
+
+	void crash() {
+		if (hasLandedOrCrashed) return; // Avoid multiple crashes
+
+		velocity = { 0, 0 };
+		hasLandedOrCrashed = true;
+		std::cout << "Plane Crashed" << std::endl;
+	}
+
+
+	void update(const std::vector<LandscapeLine>& lines) {
+		if (hasLandedOrCrashed) return;
+		if (!landed) {
+			velocity.y += GRAVITY;
+			position.x += velocity.x;
+			position.y += velocity.y;
+
+			checkCollision(lines);
+		}
+	}
+
+	void render() {
+		if (!texture) return;
+
+		SDL_Rect destRect = { (int)position.x - 10, (int)position.y - 20, 20, 40 }; // Smaller size
+		SDL_RenderCopyEx(renderer, texture, nullptr, &destRect, angle, nullptr, SDL_FLIP_NONE);
+	}
+
+	void cleanup() {
+		if (texture) SDL_DestroyTexture(texture);
+	}
+};
+
 int main(int argc, char* argv[]) {
 
 	SDL_Init(SDL_INIT_VIDEO);
@@ -274,8 +332,12 @@ int main(int argc, char* argv[]) {
 		}
 
 		rocket.handleInput(keys);
-		rocket.update();
+		rocket.update(landscape.lines);
 
+		if (rocket.hasLandedOrCrashed) {
+			SDL_Delay(2000); // Pause for 2 seconds before closing
+			running = false;  // Stop the game
+		}
 
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_RenderClear(renderer);
@@ -286,6 +348,7 @@ int main(int argc, char* argv[]) {
 		SDL_RenderPresent(renderer);
 		SDL_Delay(16);
 	}
+
 
 	rocket.cleanup();
 	SDL_DestroyRenderer(renderer);
