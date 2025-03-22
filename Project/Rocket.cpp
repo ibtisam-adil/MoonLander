@@ -112,8 +112,19 @@ void Rocket::render() {
     if (!texture) return;
 
     SDL_Rect destRect = { static_cast<int>(position.x) - 10, static_cast<int>(position.y) - 20, 20, 40 };
+
     SDL_RenderCopyEx(renderer, texture, nullptr, &destRect, angle, nullptr, SDL_FLIP_NONE);
+
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); 
+
+    SDL_Rect highlightRect = { static_cast<int>(position.x) - 10, static_cast<int>(position.y) - 20, 20, 40 };
+    SDL_RenderDrawRect(renderer, &highlightRect);
+    SDL_RenderDrawLine(renderer, position.x - 10, position.y - 20, position.x + 10, position.y - 20);
+    SDL_RenderDrawLine(renderer, position.x - 10, position.y + 20, position.x + 10, position.y + 20);
+    SDL_RenderDrawLine(renderer, position.x - 10, position.y - 20, position.x - 10, position.y + 20);
+    SDL_RenderDrawLine(renderer, position.x + 10, position.y - 20, position.x + 10, position.y + 20);
 }
+
 
 void Rocket::cleanup() {
     if (texture) {
