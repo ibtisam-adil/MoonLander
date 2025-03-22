@@ -238,16 +238,37 @@ public:
 
 		for (const auto& line : lines) {
 			if (lineIntersectsRocket(line)) {
-				if (line.landable && fabs(angle) <= 15.0f && velocity.y < 15.0f) {
-					land();  // Safe landing
+				bool isLandingZone = line.landable;
+				bool isAngleSafe = fabs(angle) <= 15.0f;
+				bool isSpeedSafe = velocity.y < 5.0f;
+
+				if (isLandingZone && isAngleSafe && isSpeedSafe) {
+					land();  // Successful landing
+					std::cout << " Landed successfully on a safe zone!" << std::endl;
 				}
 				else {
-					crash(); // Crashes if not a landing zone or bad landing
+					// Detailed crash reasons
+					std::cout << " Crash detected!" << std::endl;
+
+					if (!isLandingZone) {
+						std::cout << "You landed on non-landable terrain!" << std::endl;
+					}
+					if (!isAngleSafe) {
+						std::cout << "Angle too steep! Your angle: " << angle
+							<< " (Limit: +- 15)" << std::endl;
+					}
+					if (!isSpeedSafe) {
+						std::cout << "Speed too high! Your vertical speed: " << velocity.y
+							<< " (Limit: < 5.0)" << std::endl;
+					}
+
+					crash(); // Mark as crashed
 				}
 				return; // Stop checking after the first collision
 			}
 		}
 	}
+
 
 
 	bool lineIntersectsRocket(const LandscapeLine& line) {
