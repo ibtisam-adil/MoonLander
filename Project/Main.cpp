@@ -70,21 +70,6 @@ public:
 		SDL_RenderCopyEx(renderer, texture, nullptr, &destRect, angle, nullptr, SDL_FLIP_NONE);
 	}
 
-
-	void checkLanding(bool landable) {
-		if (position.y >= SCREEN_HEIGHT - 50) {
-			if (fabs(angle) <= 5 && landable) {
-				landed = true;  // Safe landing
-				velocity = { 0, 0 };  // Stop movement
-				printf("Landed successfully!\n");
-			}
-			else {
-				printf("Crash! Game Over\n");
-			}
-		}
-	}
-
-
 	void cleanup() {
 		if (texture) SDL_DestroyTexture(texture);
 	}
@@ -290,7 +275,6 @@ int main(int argc, char* argv[]) {
 
 		rocket.handleInput(keys);
 		rocket.update();
-		rocket.checkLanding(true);
 
 
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
