@@ -20,7 +20,7 @@ class Rocket {
 public:
 	Vector2 position;
 	Vector2 velocity;
-	float angle; // Rotation angle (-90 to +90)
+	float angle;
 	SDL_Texture* texture;
 	SDL_Renderer* renderer;
 	bool landed;
@@ -30,6 +30,8 @@ public:
 		velocity = { 0, 0 };
 		angle = 0.0f;
 	}
+
+	~Rocket() { cleanup(); }
 
 	bool loadTexture(const char* path) {
 		SDL_Surface* surface = IMG_Load(path);
@@ -43,17 +45,12 @@ public:
 	}
 
 	void handleInput(const Uint8* keys) {
-		if (keys[SDL_SCANCODE_LEFT]) {
-			angle = fmax(angle - ROTATION_SPEED, -90.0f);
-		}
-		if (keys[SDL_SCANCODE_RIGHT]) {
-			angle = fmin(angle + ROTATION_SPEED, 90.0f);
-		}
+		if (keys[SDL_SCANCODE_LEFT]) angle = std::max(angle - ROTATION_SPEED, -90.0f);
+		if (keys[SDL_SCANCODE_RIGHT]) angle = std::min(angle + ROTATION_SPEED, 90.0f);
 		if (keys[SDL_SCANCODE_UP]) {
-			// Convert angle to radians
 			float radian = angle * M_PI / 180.0f;
-			velocity.x += sin(radian) * THRUST_POWER;
-			velocity.y -= cos(radian) * THRUST_POWER;
+			velocity.x += std::sin(radian) * THRUST_POWER;
+			velocity.y -= std::cos(radian) * THRUST_POWER;
 		}
 	}
 
@@ -114,7 +111,7 @@ public:
 	float scale;
 	float rightEdge;
 
-	Landscape(int screenWidth) {
+	explicit Landscape(int screenWidth) {
 		scale = screenWidth / 600.0f;  // Adjust scaling to match the screen width
 		setupData();
 		adjustPoints();
@@ -131,8 +128,6 @@ public:
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
-		// Draw landscape lines
-		// Draw landscape lines
 		for (size_t i = 0; i < lines.size(); i++) {
 			Vector2 p1 = { lines[i].p1.x + offset, lines[i].p1.y };
 			Vector2 p2 = { lines[i].p2.x + offset, lines[i].p2.y };
@@ -277,7 +272,7 @@ int main(int argc, char* argv[]) {
 
 	Landscape landscape(SCREEN_WIDTH);
 	Rocket rocket(renderer);
-	if (!rocket.loadTexture("C:/Users/ibtis/OneDrive/Desktop/SDL2_Project/AirplaneLanding/Project/assets/rocket.png")) {
+	if (!rocket.loadTexture("assets/rocket.png")) {
 		SDL_Quit();
 		return -1;
 	}
