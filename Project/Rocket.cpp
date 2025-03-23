@@ -25,6 +25,9 @@ bool Rocket::loadTexture(const char* path) {
 }
 
 void Rocket::handleInput(const Uint8* keys, float deltaTime) {
+
+    if (hasLandedOrCrashed) return;
+
     if (keys[SDL_SCANCODE_LEFT]) angle = std::max(angle - ROTATION_SPEED, -90.0f);
     if (keys[SDL_SCANCODE_RIGHT]) angle = std::min(angle + ROTATION_SPEED, 90.0f);
 
@@ -76,8 +79,12 @@ void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
     for (const auto& line : lines) {
         if (lineIntersectsRocket(line)) {
             bool isLandingZone = line.landable;
-            bool isAngleSafe = std::fabs(angle) <= 35.0f;
-            bool isSpeedSafe = velocity.y < 35.0f;
+            const float ANGLE_TOLERANCE = 2.0f; // Allow ±2 degrees margin
+            const float SPEED_TOLERANCE = 2.0f; // Allow a small margin
+
+            bool isAngleSafe = std::fabs(angle) <= (10.0f + ANGLE_TOLERANCE);
+            bool isSpeedSafe = velocity.y < (25.0f + SPEED_TOLERANCE);
+
 
             if (isLandingZone && isAngleSafe && isSpeedSafe) {
                 land();
@@ -90,10 +97,10 @@ void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
                     std::cout << "You landed on non-landable terrain!" << std::endl;
                 }
                 if (!isAngleSafe) {
-                    std::cout << "Angle too steep! Your angle: " << angle << " (Limit: +- 35)" << std::endl;
+                    std::cout << "Angle too steep! Your angle: " << angle << " (Limit: +- 15)" << std::endl;
                 }
                 if (!isSpeedSafe) {
-                    std::cout << "Speed too high! Your vertical speed: " << velocity.y << " (Limit: < 15.0)" << std::endl;
+                    std::cout << "Speed too high! Your vertical speed: " << velocity.y << " (Limit: < 25.0)" << std::endl;
                 }
 
                 crash();
@@ -104,11 +111,17 @@ void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
 }
 
 bool Rocket::lineIntersectsRocket(const LandscapeLine& line) {
-    Vector2 bottomLeft = { position.x - 10, position.y + 20 };
-    Vector2 bottomRight = { position.x + 10, position.y + 20 };
+    // Define a smaller collision box that ignores the flame
+    int rocketWidth = 6;
+    int rocketHeight = 12;  // Only the body, ignoring the flame
+
+    // Get bottom corners of the rocket body (not the flame)
+    Vector2 bottomLeft = { position.x - rocketWidth / 2, position.y + rocketHeight / 2 };
+    Vector2 bottomRight = { position.x + rocketWidth / 2, position.y + rocketHeight / 2 };
 
     return pointIsBelowLine(bottomLeft, line) || pointIsBelowLine(bottomRight, line);
 }
+
 
 bool Rocket::pointIsBelowLine(const Vector2& point, const LandscapeLine& line) {
     float t = (point.x - line.p1.x) / (line.p2.x - line.p1.x);
@@ -123,6 +136,7 @@ void Rocket::land() {
 
     velocity = { 0, 0 };
     landed = true;
+    hasLandedOrCrashed = true;
     std::cout << "Rocket Landed Safely" << std::endl;
 }
 
@@ -134,19 +148,8 @@ void Rocket::crash() {
     std::cout << "Rocket Crashed!" << std::endl;
 }
 
-//void Rocket::render() {
-//    if (!texture) return;
-//
-//    SDL_Rect destRect = { static_cast<int>(position.x) - 10, static_cast<int>(position.y) - 20, 20, 40 };
-//    SDL_RenderCopyEx(renderer, texture, nullptr, &destRect, angle, nullptr, SDL_FLIP_NONE);
-//
-//    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-//    SDL_Rect highlightRect = { static_cast<int>(position.x) - 10, static_cast<int>(position.y) - 20, 20, 40 };
-//    SDL_RenderDrawRect(renderer, &highlightRect);
-//}
-
 void Rocket::render() {
-    int width = 6;  // Smaller width
+   int width = 6;  // Smaller width
     int height = 12; // Smaller height
 
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White spaceship
@@ -168,7 +171,7 @@ void Rocket::render() {
         float x = position.x + (p.x - position.x) * cos(radian) - (p.y - position.y) * sin(radian);
         float y = position.y + (p.x - position.x) * sin(radian) + (p.y - position.y) * cos(radian);
         return Vector2{ x, y };
-        };
+    };
 
     top = rotatePoint(top);
     bottomLeft = rotatePoint(bottomLeft);
