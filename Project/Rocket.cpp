@@ -33,15 +33,13 @@ void Rocket::handleInput(const Uint8* keys, float deltaTime) {
         thrustBuild += (THRUST_POWER - thrustBuild) * 0.2f;
 
         velocity.x += std::sin(radian) * thrustBuild * deltaTime;
-        velocity.y -= std::cos(radian) * thrustBuild * deltaTime; // Reduce vertical speed
+        velocity.y -= 2.5f * std::cos(radian) * thrustBuild * deltaTime;
 
-        fuel -= 1; // Burn fuel
+        fuel -= 1; 
 
-        // Debugging
-        std::cout << "Applying Thrust - Velocity X: " << velocity.x << " | Velocity Y: " << velocity.y << std::endl;
     }
     else {
-        thrustBuild *= 0.9f; // Reduce thrust gradually if not pressing UP
+        thrustBuild *= 0.9f;
     }
 }
 
@@ -52,7 +50,7 @@ void Rocket::update(const std::vector<LandscapeLine>& lines, float deltaTime) {
         timeElapsed += deltaTime;
 
         // Always apply gravity: Vertical speed increases by +1 per second
-        velocity.y += 1.0f * deltaTime;
+        velocity.y += 5.5f * deltaTime;
 
         // Reduce horizontal speed naturally towards 0
         if (velocity.x > 0) {
@@ -66,8 +64,6 @@ void Rocket::update(const std::vector<LandscapeLine>& lines, float deltaTime) {
         position.x += velocity.x * deltaTime;
         position.y += velocity.y * deltaTime;
 
-        // Debugging: Print movement values
-        std::cout << "Velocity X: " << velocity.x << " | Velocity Y: " << velocity.y << std::endl;
 
         checkCollision(lines);
     }
@@ -80,7 +76,7 @@ void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
     for (const auto& line : lines) {
         if (lineIntersectsRocket(line)) {
             bool isLandingZone = line.landable;
-            bool isAngleSafe = std::fabs(angle) <= 15.0f;
+            bool isAngleSafe = std::fabs(angle) <= 35.0f;
             bool isSpeedSafe = velocity.y < 35.0f;
 
             if (isLandingZone && isAngleSafe && isSpeedSafe) {
@@ -97,7 +93,7 @@ void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
                     std::cout << "Angle too steep! Your angle: " << angle << " (Limit: +- 35)" << std::endl;
                 }
                 if (!isSpeedSafe) {
-                    std::cout << "Speed too high! Your vertical speed: " << velocity.y << " (Limit: < 5.0)" << std::endl;
+                    std::cout << "Speed too high! Your vertical speed: " << velocity.y << " (Limit: < 15.0)" << std::endl;
                 }
 
                 crash();
@@ -150,12 +146,11 @@ void Rocket::render() {
 }
 
 float Rocket::getAltitude(const std::vector<LandscapeLine>& lines) {
-    float closestGroundY = SCREEN_HEIGHT; // Assume the ground is at the bottom
-    float rocketBottomY = position.y + 20; // Bottom of the rocket
+    float closestGroundY = SCREEN_HEIGHT; 
+    float rocketBottomY = position.y + 20;
 
     for (const auto& line : lines) {
         if (position.x >= line.p1.x && position.x <= line.p2.x) {
-            // Interpolate the Y-position on the line based on rocket's X position
             float t = (position.x - line.p1.x) / (line.p2.x - line.p1.x);
             float groundY = line.p1.y + t * (line.p2.y - line.p1.y);
 
@@ -165,7 +160,7 @@ float Rocket::getAltitude(const std::vector<LandscapeLine>& lines) {
         }
     }
 
-    return closestGroundY - rocketBottomY; // Distance from rocket bottom to ground
+    return closestGroundY - rocketBottomY;
 }
 
 Vector2 Rocket::getVelocity() { return velocity; }

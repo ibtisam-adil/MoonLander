@@ -43,9 +43,9 @@ public:
     const float SCREEN_WIDTH = 1200.0f;
     const int SCREEN_HEIGHT = 800;
     const float ROTATION_SPEED = 2.0f;
-    const float THRUST_POWER = 5.0f;
+    const float THRUST_POWER = 10.0f;
     const float GRAVITY = 0.01f;
     const float RIGHTWARD_VELOCITY = 0.3f;
-    const float INITIAL_HORIZONTAL_SPEED = 40.0f;
+    const float INITIAL_HORIZONTAL_SPEED = 30.0f;
     const float INITIAL_VERTICAL_SPEED = 12.0f;
 };
