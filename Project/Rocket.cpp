@@ -23,16 +23,6 @@ bool Rocket::loadTexture(const char* path) {
     return texture != nullptr;
 }
 
-void Rocket::handleInput(const Uint8* keys) {
-    if (keys[SDL_SCANCODE_LEFT]) angle = std::max(angle - ROTATION_SPEED, -90.0f);
-    if (keys[SDL_SCANCODE_RIGHT]) angle = std::min(angle + ROTATION_SPEED, 90.0f);
-    if (keys[SDL_SCANCODE_UP]) {
-        float radian = angle * M_PI / 180.0f;
-        velocity.x += std::sin(radian) * THRUST_POWER;
-        velocity.y -= std::cos(radian) * THRUST_POWER;
-    }
-}
-
 void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
     if (hasLandedOrCrashed) return;
 
@@ -97,16 +87,33 @@ void Rocket::crash() {
     std::cout << "Plane Crashed" << std::endl;
 }
 
+void Rocket::handleInput(const Uint8* keys) {
+    if (keys[SDL_SCANCODE_LEFT]) angle = std::max(angle - ROTATION_SPEED, -90.0f);
+    if (keys[SDL_SCANCODE_RIGHT]) angle = std::min(angle + ROTATION_SPEED, 90.0f);
+    if (keys[SDL_SCANCODE_UP]) {
+        float radian = angle * M_PI / 180.0f;
+
+        // Reduce thrust power to make it struggle against gravity
+        velocity.x += std::sin(radian) * (THRUST_POWER * 0.3f); // 30% of original power
+        velocity.y -= std::cos(radian) * (THRUST_POWER * 0.3f);
+    }
+}
+
 void Rocket::update(const std::vector<LandscapeLine>& lines) {
     if (hasLandedOrCrashed) return;
     if (!landed) {
-        velocity.y += GRAVITY;
+        velocity.y += GRAVITY * 1.1f;  // Increase gravity effect slightly
+
+        // Add a little drag to horizontal movement (prevents floating sideways)
+        velocity.x *= 0.99f;
+
         position.x += velocity.x;
         position.y += velocity.y;
 
         checkCollision(lines);
     }
 }
+
 
 void Rocket::render() {
     if (!texture) return;
