@@ -81,7 +81,7 @@ void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
         if (lineIntersectsRocket(line)) {
             bool isLandingZone = line.landable;
             bool isAngleSafe = std::fabs(angle) <= 15.0f;
-            bool isSpeedSafe = velocity.y < 5.0f;
+            bool isSpeedSafe = velocity.y < 35.0f;
 
             if (isLandingZone && isAngleSafe && isSpeedSafe) {
                 land();
@@ -94,7 +94,7 @@ void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
                     std::cout << "You landed on non-landable terrain!" << std::endl;
                 }
                 if (!isAngleSafe) {
-                    std::cout << "Angle too steep! Your angle: " << angle << " (Limit: +- 15)" << std::endl;
+                    std::cout << "Angle too steep! Your angle: " << angle << " (Limit: +- 35)" << std::endl;
                 }
                 if (!isSpeedSafe) {
                     std::cout << "Speed too high! Your vertical speed: " << velocity.y << " (Limit: < 5.0)" << std::endl;
@@ -148,6 +148,30 @@ void Rocket::render() {
     SDL_Rect highlightRect = { static_cast<int>(position.x) - 10, static_cast<int>(position.y) - 20, 20, 40 };
     SDL_RenderDrawRect(renderer, &highlightRect);
 }
+
+float Rocket::getAltitude(const std::vector<LandscapeLine>& lines) {
+    float closestGroundY = SCREEN_HEIGHT; // Assume the ground is at the bottom
+    float rocketBottomY = position.y + 20; // Bottom of the rocket
+
+    for (const auto& line : lines) {
+        if (position.x >= line.p1.x && position.x <= line.p2.x) {
+            // Interpolate the Y-position on the line based on rocket's X position
+            float t = (position.x - line.p1.x) / (line.p2.x - line.p1.x);
+            float groundY = line.p1.y + t * (line.p2.y - line.p1.y);
+
+            if (groundY < closestGroundY) {
+                closestGroundY = groundY;
+            }
+        }
+    }
+
+    return closestGroundY - rocketBottomY; // Distance from rocket bottom to ground
+}
+
+Vector2 Rocket::getVelocity() { return velocity; }
+int Rocket::getFuel() { return fuel; }
+float Rocket::getTimeElapsed() { return timeElapsed; }
+
 
 void Rocket::cleanup() {
     if (texture) {

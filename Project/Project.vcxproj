@@ -121,14 +121,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\vcpkg\installed\x64-windows\include\SDL2;C:\vcpkg\installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\vcpkg\installed\x64-windows\include\SDL2;C:\vcpkg\installed\x64-windows\include;C:\Users\ibtis\Downloads\SDL2_ttf-devel-2.24.0-VC\SDL2_ttf-2.24.0\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp23</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;OpenGL32.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\vcpkg\installed\x64-windows\lib;C:\vcpkg\installed\x64-windows\lib\manual-link</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;OpenGL32.lib;SDL2_image.lib;%(AdditionalDependencies);SDL2_ttf.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\vcpkg\installed\x64-windows\lib;C:\vcpkg\installed\x64-windows\lib\manual-link;C:\Users\ibtis\Downloads\SDL2_ttf-devel-2.24.0-VC\SDL2_ttf-2.24.0\lib\x64</AdditionalLibraryDirectories>
       <AdditionalOptions>/NODEFAULTLIB:msvcrt.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -166,6 +166,9 @@
   <ItemGroup>
     <Image Include="assets\plane_2_blue.png" />
     <Image Include="assets\rocket.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="assets\Roboto.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

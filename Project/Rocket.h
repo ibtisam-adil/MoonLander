@@ -23,6 +23,11 @@ public:
     void render();
     void cleanup();
 
+    float getAltitude(const std::vector<LandscapeLine>& lines);
+    float getTimeElapsed();
+    int getFuel();
+    Vector2 getVelocity();
+
     Vector2 position;
     Vector2 velocity;
     float angle;
@@ -35,7 +40,8 @@ public:
     int fuel;
     float thrustBuild;
 
-    const float SCREEN_WIDTH = 800.0f;
+    const float SCREEN_WIDTH = 1200.0f;
+    const int SCREEN_HEIGHT = 800;
     const float ROTATION_SPEED = 2.0f;
     const float THRUST_POWER = 5.0f;
     const float GRAVITY = 0.01f;
