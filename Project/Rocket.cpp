@@ -1,0 +1,274 @@
+#include "Rocket.h"
+
+Rocket::Rocket(SDL_Renderer* renderer)
+    : renderer(renderer), texture(nullptr), landed(false), hasLandedOrCrashed(false),
+    fuel(2000), thrustBuild(0.0f)
+{
+    position = { 100, 100 };
+    velocity = { INITIAL_HORIZONTAL_SPEED, INITIAL_VERTICAL_SPEED };
+    angle = 0.0f;
+}
+
+Rocket::~Rocket() {
+    cleanup();
+}
+
+bool Rocket::loadTexture(const char* path) {
+    SDL_Surface* surface = IMG_Load(path);
+    if (!surface) {
+        std::cout << "Failed to load rocket image: " << IMG_GetError() << std::endl;
+        return false;
+    }
+    texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+    return texture != nullptr;
+}
+
+void Rocket::handleInput(const Uint8* keys, float deltaTime) {
+
+    if (hasLandedOrCrashed) return;
+
+    if (keys[SDL_SCANCODE_LEFT]) angle = std::max(angle - ROTATION_SPEED, -90.0f);
+    if (keys[SDL_SCANCODE_RIGHT]) angle = std::min(angle + ROTATION_SPEED, 90.0f);
+
+    if (keys[SDL_SCANCODE_UP] && fuel > 0) {
+        float radian = angle * M_PI / 180.0f;
+        thrustBuild += (THRUST_POWER - thrustBuild) * 0.2f;
+
+        velocity.x += std::sin(radian) * thrustBuild * deltaTime;
+        velocity.y -= 2.5f * std::cos(radian) * thrustBuild * deltaTime;
+
+        fuel -= 1; 
+
+    }
+    else {
+        thrustBuild *= 0.9f;
+    }
+}
+
+void Rocket::update(const std::vector<LandscapeLine>& lines, float deltaTime) {
+    if (hasLandedOrCrashed) return;
+
+    if (!landed) {
+        timeElapsed += deltaTime;
+
+        // Always apply gravity: Vertical speed increases by +1 per second
+        velocity.y += 5.5f * deltaTime;
+
+        // Reduce horizontal speed naturally towards 0
+        if (velocity.x > 0) {
+            velocity.x = std::max(0.0f, velocity.x - 1.0f * deltaTime);
+        }
+        else if (velocity.x < 0) {
+            velocity.x = std::min(0.0f, velocity.x + 1.0f * deltaTime);
+        }
+
+        // Apply movement
+        position.x += velocity.x * deltaTime;
+        position.y += velocity.y * deltaTime;
+
+
+        checkCollision(lines);
+    }
+}
+
+
+void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
+    if (hasLandedOrCrashed) return;
+
+    for (const auto& line : lines) {
+        if (lineIntersectsRocket(line)) {
+            bool isLandingZone = line.landable;
+            const float ANGLE_TOLERANCE = 2.0f; // Allow ±2 degrees margin
+            const float SPEED_TOLERANCE = 2.0f; // Allow a small margin
+
+            bool isAngleSafe = std::fabs(angle) <= (10.0f + ANGLE_TOLERANCE);
+            bool isSpeedSafe = velocity.y < (25.0f + SPEED_TOLERANCE);
+
+
+            if (isLandingZone && isAngleSafe && isSpeedSafe) {
+                land();
+                std::cout << " Landed successfully on a safe zone!" << std::endl;
+            }
+            else {
+                std::cout << " Crash detected!" << std::endl;
+
+                if (!isLandingZone) {
+                    std::cout << "You landed on non-landable terrain!" << std::endl;
+                }
+                if (!isAngleSafe) {
+                    std::cout << "Angle too steep! Your angle: " << angle << " (Limit: +- 15)" << std::endl;
+                }
+                if (!isSpeedSafe) {
+                    std::cout << "Speed too high! Your vertical speed: " << velocity.y << " (Limit: < 25.0)" << std::endl;
+                }
+
+                crash();
+            }
+            return;
+        }
+    }
+}
+
+bool Rocket::lineIntersectsRocket(const LandscapeLine& line) {
+    // Define a smaller collision box that ignores the flame
+    int rocketWidth = 6;
+    int rocketHeight = 12;  // Only the body, ignoring the flame
+
+    // Get bottom corners of the rocket body (not the flame)
+    Vector2 bottomLeft = { position.x - rocketWidth / 2, position.y + rocketHeight / 2 };
+    Vector2 bottomRight = { position.x + rocketWidth / 2, position.y + rocketHeight / 2 };
+
+    return pointIsBelowLine(bottomLeft, line) || pointIsBelowLine(bottomRight, line);
+}
+
+
+bool Rocket::pointIsBelowLine(const Vector2& point, const LandscapeLine& line) {
+    float t = (point.x - line.p1.x) / (line.p2.x - line.p1.x);
+    if (t < 0 || t > 1) return false;
+
+    float yOnLine = line.p1.y + t * (line.p2.y - line.p1.y);
+    return point.y >= yOnLine;
+}
+
+void Rocket::land() {
+    if (landed) return;
+
+    velocity = { 0, 0 };
+    landed = true;
+    hasLandedOrCrashed = true;
+    std::cout << "Rocket Landed Safely" << std::endl;
+
+    SDL_Delay(2000);
+}
+
+
+void Rocket::crash() {
+    if (hasLandedOrCrashed) return;
+
+    velocity = { 0, 0 };
+    hasLandedOrCrashed = true;
+    std::cout << "Rocket Crashed!" << std::endl;
+}
+
+void Rocket::render() {
+   int width = 6;  // Smaller width
+    int height = 12; // Smaller height
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White spaceship
+
+    // Define a smaller spaceship shape
+    Vector2 top = { position.x, position.y - height / 2 };
+    Vector2 bottomLeft = { position.x - width / 2, position.y + height / 2 };
+    Vector2 bottomRight = { position.x + width / 2, position.y + height / 2 };
+    Vector2 wingLeft = { position.x - width, position.y };
+    Vector2 wingRight = { position.x + width, position.y };
+    Vector2 thrusterLeft = { position.x - width / 4, position.y + height / 2 };
+    Vector2 thrusterRight = { position.x + width / 4, position.y + height / 2 };
+    Vector2 cockpitTop = { position.x - width / 4, position.y - height / 3 };
+    Vector2 cockpitBottom = { position.x + width / 4, position.y - height / 4 };
+
+    // Rotate points according to the rocket's angle
+    float radian = angle * M_PI / 180.0f;
+    auto rotatePoint = [&](Vector2 p) {
+        float x = position.x + (p.x - position.x) * cos(radian) - (p.y - position.y) * sin(radian);
+        float y = position.y + (p.x - position.x) * sin(radian) + (p.y - position.y) * cos(radian);
+        return Vector2{ x, y };
+    };
+
+    top = rotatePoint(top);
+    bottomLeft = rotatePoint(bottomLeft);
+    bottomRight = rotatePoint(bottomRight);
+    wingLeft = rotatePoint(wingLeft);
+    wingRight = rotatePoint(wingRight);
+    thrusterLeft = rotatePoint(thrusterLeft);
+    thrusterRight = rotatePoint(thrusterRight);
+    cockpitTop = rotatePoint(cockpitTop);
+    cockpitBottom = rotatePoint(cockpitBottom);
+
+    // Draw main spaceship body
+    SDL_RenderDrawLine(renderer, top.x, top.y, bottomLeft.x, bottomLeft.y);
+    SDL_RenderDrawLine(renderer, bottomLeft.x, bottomLeft.y, bottomRight.x, bottomRight.y);
+    SDL_RenderDrawLine(renderer, bottomRight.x, bottomRight.y, top.x, top.y);
+
+    // Draw wings
+    SDL_RenderDrawLine(renderer, bottomLeft.x, bottomLeft.y, wingLeft.x, wingLeft.y);
+    SDL_RenderDrawLine(renderer, bottomRight.x, bottomRight.y, wingRight.x, wingRight.y);
+
+    // Draw cockpit
+    SDL_SetRenderDrawColor(renderer, 0, 191, 255, 255); // Light blue cockpit
+    SDL_RenderDrawLine(renderer, cockpitTop.x, cockpitTop.y, cockpitBottom.x, cockpitBottom.y);
+
+    // **FLAME ROTATION FIX**
+    if (thrustBuild > 0) {
+        int flameHeight = static_cast<int>(thrustBuild * 4); // Adjusted flame size
+        int maxFlameHeight = 10;
+        flameHeight = std::min(flameHeight, maxFlameHeight);
+
+        // Calculate the flame tip position
+        Vector2 flameTip = { position.x, position.y + height / 2 + flameHeight };
+        flameTip = rotatePoint(flameTip);  // Rotate the flame tip
+
+        SDL_SetRenderDrawColor(renderer, 255, 140, 0, 255); // Orange flame
+        SDL_RenderDrawLine(renderer, thrusterLeft.x, thrusterLeft.y, flameTip.x, flameTip.y);
+        SDL_RenderDrawLine(renderer, thrusterRight.x, thrusterRight.y, flameTip.x, flameTip.y);
+    }
+
+    // Reset color to default white
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+}
+
+
+float Rocket::getAltitude(const std::vector<LandscapeLine>& lines) {
+    float closestGroundY = SCREEN_HEIGHT; 
+    float rocketBottomY = position.y + 20;
+
+    for (const auto& line : lines) {
+        if (position.x >= line.p1.x && position.x <= line.p2.x) {
+            float t = (position.x - line.p1.x) / (line.p2.x - line.p1.x);
+            float groundY = line.p1.y + t * (line.p2.y - line.p1.y);
+
+            if (groundY < closestGroundY) {
+                closestGroundY = groundY;
+            }
+        }
+    }
+
+    return closestGroundY - rocketBottomY;
+}
+
+Vector2 Rocket::getVelocity() { return velocity; }
+int Rocket::getFuel() { return fuel; }
+float Rocket::getTimeElapsed() { return timeElapsed; }
+
+bool Rocket::hasCrashed() const {
+    return hasLandedOrCrashed && !landed;
+}
+
+bool Rocket::hasLanded() const {
+    return landed;
+}
+
+void Rocket::setFuel(int amount) {
+    fuel = amount;
+}
+
+void Rocket::reset() {
+    position = { 100, 100 };  // Reset to initial position
+    velocity = { INITIAL_HORIZONTAL_SPEED, INITIAL_VERTICAL_SPEED }; // Reset velocity
+    angle = 0.0f;
+    landed = false;
+    hasLandedOrCrashed = false;
+    thrustBuild = 0.0f;
+    timeElapsed = 0.0f;
+
+    std::cout << "Rocket has been reset to its initial state." << std::endl;
+}
+
+
+void Rocket::cleanup() {
+    if (texture) {
+        SDL_DestroyTexture(texture);
+        texture = nullptr;
+    }
+}

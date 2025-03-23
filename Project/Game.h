@@ -1,40 +1,46 @@
 #pragma once
-#include <SDL.h>
+#include <SDL2/SDL.h>
+#include <vector>
+#include <cstdlib>
 #include <SDL_image.h>
+#include "Rocket.h"
+#include "Landscape.h"
+#include <SDL_ttf.h>
+#include <string>
 
-// Airplane structure
-struct Airplane {
-    float x, y;    // Position
-    float vx, vy;  // Velocity
-    float angle;   // Rotation angle
-    bool landingGear = false;
 
-    Airplane() : x(0), y(0), vx(0), vy(0), angle(0), landingGear(false) {}
-
-    void applyGravity();
-    void update();
-    void rotate(bool left);
-    void throttleUp();
-    void applyFlaps();
-};
-
-// Game class
 class Game {
 public:
-    Game();
-    ~Game();
-
-    bool init();
-    void handleInput();
-    void update();
-    void render();
-    void run();
-    void cleanup();
+	Game(int screenWidth, int screenHeight);
+	~Game();
+	bool init();
+	void run();
+	void cleanup();
+	void renderHUD(SDL_Renderer* renderer, Rocket& rocket);
+	void renderText(SDL_Renderer* renderer, const std::string& text, TTF_Font* font, SDL_Color color, int x, int y);
+	void renderMessage(const std::string& message);
+	void restart(bool fullRestart);
 
 private:
-    SDL_Window* window;
-    SDL_Renderer* renderer;
-    SDL_Texture* airplaneTexture;
-    bool running;
-    Airplane plane;
+	void handleEvents();
+	void update(float deltaTime);
+	void render();
+
+	TTF_Font* font;
+	SDL_Window* window;
+	SDL_Renderer* renderer;
+	Rocket* rocket;
+	Landscape* landscape;
+
+	bool running;
+	int score = 0;
+	SDL_Event event;
+	const Uint8* keys;
+	int viewX;
+	const int SCREEN_WIDTH = 1200;
+	const int SCREEN_HEIGHT = 800;
+	bool lowFuelMessageVisible = false;  
+	Uint32 lowFuelTimer = 0;  // Timer to control flicker frequency
+	const Uint32 lowFuelFlickerInterval = 500;  // Time in milliseconds for the flicker interval (adjustable)
+
 };
