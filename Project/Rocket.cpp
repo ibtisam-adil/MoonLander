@@ -146,14 +146,23 @@ void Rocket::crash() {
 //}
 
 void Rocket::render() {
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White rocket
+    int width = 6;  // Smaller width
+    int height = 12; // Smaller height
 
-    // Define the rocket's triangle points relative to its position
-    Vector2 tip = { position.x, position.y - 20 }; // Top of the rocket
-    Vector2 left = { position.x - 10, position.y + 20 }; // Bottom-left
-    Vector2 right = { position.x + 10, position.y + 20 }; // Bottom-right
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White spaceship
 
-    // Rotate the points based on the rocket's angle
+    // Define a smaller spaceship shape
+    Vector2 top = { position.x, position.y - height / 2 };
+    Vector2 bottomLeft = { position.x - width / 2, position.y + height / 2 };
+    Vector2 bottomRight = { position.x + width / 2, position.y + height / 2 };
+    Vector2 wingLeft = { position.x - width, position.y };
+    Vector2 wingRight = { position.x + width, position.y };
+    Vector2 thrusterLeft = { position.x - width / 4, position.y + height / 2 };
+    Vector2 thrusterRight = { position.x + width / 4, position.y + height / 2 };
+    Vector2 cockpitTop = { position.x - width / 4, position.y - height / 3 };
+    Vector2 cockpitBottom = { position.x + width / 4, position.y - height / 4 };
+
+    // Rotate points according to the rocket's angle
     float radian = angle * M_PI / 180.0f;
     auto rotatePoint = [&](Vector2 p) {
         float x = position.x + (p.x - position.x) * cos(radian) - (p.y - position.y) * sin(radian);
@@ -161,19 +170,46 @@ void Rocket::render() {
         return Vector2{ x, y };
         };
 
-    tip = rotatePoint(tip);
-    left = rotatePoint(left);
-    right = rotatePoint(right);
+    top = rotatePoint(top);
+    bottomLeft = rotatePoint(bottomLeft);
+    bottomRight = rotatePoint(bottomRight);
+    wingLeft = rotatePoint(wingLeft);
+    wingRight = rotatePoint(wingRight);
+    thrusterLeft = rotatePoint(thrusterLeft);
+    thrusterRight = rotatePoint(thrusterRight);
+    cockpitTop = rotatePoint(cockpitTop);
+    cockpitBottom = rotatePoint(cockpitBottom);
 
-    // Draw the triangle
-    SDL_RenderDrawLine(renderer, tip.x, tip.y, left.x, left.y);
-    SDL_RenderDrawLine(renderer, left.x, left.y, right.x, right.y);
-    SDL_RenderDrawLine(renderer, right.x, right.y, tip.x, tip.y);
+    // Draw main spaceship body
+    SDL_RenderDrawLine(renderer, top.x, top.y, bottomLeft.x, bottomLeft.y);
+    SDL_RenderDrawLine(renderer, bottomLeft.x, bottomLeft.y, bottomRight.x, bottomRight.y);
+    SDL_RenderDrawLine(renderer, bottomRight.x, bottomRight.y, top.x, top.y);
 
-    // Optional: Highlight the bounding box for debugging
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    SDL_Rect highlightRect = { static_cast<int>(position.x) - 10, static_cast<int>(position.y) - 20, 20, 40 };
-    SDL_RenderDrawRect(renderer, &highlightRect);
+    // Draw wings
+    SDL_RenderDrawLine(renderer, bottomLeft.x, bottomLeft.y, wingLeft.x, wingLeft.y);
+    SDL_RenderDrawLine(renderer, bottomRight.x, bottomRight.y, wingRight.x, wingRight.y);
+
+    // Draw cockpit
+    SDL_SetRenderDrawColor(renderer, 0, 191, 255, 255); // Light blue cockpit
+    SDL_RenderDrawLine(renderer, cockpitTop.x, cockpitTop.y, cockpitBottom.x, cockpitBottom.y);
+
+    // **FLAME ROTATION FIX**
+    if (thrustBuild > 0) {
+        int flameHeight = static_cast<int>(thrustBuild * 4); // Adjusted flame size
+        int maxFlameHeight = 10;
+        flameHeight = std::min(flameHeight, maxFlameHeight);
+
+        // Calculate the flame tip position
+        Vector2 flameTip = { position.x, position.y + height / 2 + flameHeight };
+        flameTip = rotatePoint(flameTip);  // Rotate the flame tip
+
+        SDL_SetRenderDrawColor(renderer, 255, 140, 0, 255); // Orange flame
+        SDL_RenderDrawLine(renderer, thrusterLeft.x, thrusterLeft.y, flameTip.x, flameTip.y);
+        SDL_RenderDrawLine(renderer, thrusterRight.x, thrusterRight.y, flameTip.x, flameTip.y);
+    }
+
+    // Reset color to default white
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 }
 
 
