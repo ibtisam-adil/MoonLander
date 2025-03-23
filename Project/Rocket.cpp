@@ -2,9 +2,9 @@
 
 Rocket::Rocket(SDL_Renderer* renderer)
     : renderer(renderer), texture(nullptr), landed(false), hasLandedOrCrashed(false),
-    fuel(1000), thrustBuild(0.0f)
+    fuel(2000), thrustBuild(0.0f)
 {
-    position = { SCREEN_WIDTH / 4.0f, 100 };
+    position = { 100, 100 };
     velocity = { INITIAL_HORIZONTAL_SPEED, INITIAL_VERTICAL_SPEED };
     angle = 0.0f;
 }
@@ -138,7 +138,10 @@ void Rocket::land() {
     landed = true;
     hasLandedOrCrashed = true;
     std::cout << "Rocket Landed Safely" << std::endl;
+
+    SDL_Delay(2000);
 }
+
 
 void Rocket::crash() {
     if (hasLandedOrCrashed) return;
@@ -237,6 +240,30 @@ float Rocket::getAltitude(const std::vector<LandscapeLine>& lines) {
 Vector2 Rocket::getVelocity() { return velocity; }
 int Rocket::getFuel() { return fuel; }
 float Rocket::getTimeElapsed() { return timeElapsed; }
+
+bool Rocket::hasCrashed() const {
+    return hasLandedOrCrashed && !landed;
+}
+
+bool Rocket::hasLanded() const {
+    return landed;
+}
+
+void Rocket::setFuel(int amount) {
+    fuel = amount;
+}
+
+void Rocket::reset() {
+    position = { 100, 100 };  // Reset to initial position
+    velocity = { INITIAL_HORIZONTAL_SPEED, INITIAL_VERTICAL_SPEED }; // Reset velocity
+    angle = 0.0f;
+    landed = false;
+    hasLandedOrCrashed = false;
+    thrustBuild = 0.0f;
+    timeElapsed = 0.0f;
+
+    std::cout << "Rocket has been reset to its initial state." << std::endl;
+}
 
 
 void Rocket::cleanup() {

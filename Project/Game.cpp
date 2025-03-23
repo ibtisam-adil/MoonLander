@@ -1,6 +1,9 @@
 ﻿#include "game.h"
 #include <iostream>
 
+enum GameState { MENU, PLAYING, GAME_OVER };
+GameState currentState = MENU;
+
 Game::Game(int screenWidth, int screenHeight)
     : window(nullptr), renderer(nullptr), rocket(nullptr), landscape(nullptr), running(true), viewX(0), score(0) {
 }
@@ -33,7 +36,7 @@ bool Game::init() {
         return false;
     }
 
-    font = TTF_OpenFont("assets/Roboto.ttf", 24); // Change to a valid font file in your project
+    font = TTF_OpenFont("assets/Roboto.ttf", 24);
     if (!font) {
         std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;
         return false;
@@ -50,22 +53,57 @@ bool Game::init() {
     return true;
 }
 
-
 void Game::handleEvents() {
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
             running = false;
         }
+        else if (event.type == SDL_MOUSEBUTTONDOWN && currentState == MENU) {
+            currentState = PLAYING;
+        }
+        else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
+            if (currentState == GAME_OVER) {
+                restart(true);  // Full restart when in Game Over screen
+            }
+        }
     }
 }
 
 void Game::update(float deltaTime) {
-    rocket->handleInput(keys, deltaTime);  // Pass deltaTime as the second argument
-    rocket->update(landscape->lines, deltaTime); // Pass deltaTime to update function
+    if (currentState == PLAYING) {
+        rocket->handleInput(keys, deltaTime);
+        rocket->update(landscape->lines, deltaTime);
 
-    if (rocket->hasLandedOrCrashed) {
-        SDL_Delay(2000); // Pause for 2 seconds before closing
-        running = false;  // Stop the game
+        // Check for low fuel and control flickering
+        if (rocket->getFuel() < 200) {
+            Uint32 currentTime = SDL_GetTicks();
+
+            // Toggle visibility of the "Low Fuel" message at regular intervals (flicker effect)
+            if (currentTime - lowFuelTimer >= lowFuelFlickerInterval) {
+                lowFuelMessageVisible = !lowFuelMessageVisible;
+                lowFuelTimer = currentTime;  // Reset the timer
+            }
+        }
+
+        // Check for rocket landing or crash
+        if (rocket->hasLandedOrCrashed) {
+            if (rocket->hasCrashed()) {
+                if (rocket->getFuel() > 300) {
+                    rocket->setFuel(rocket->getFuel() - 300);
+                    renderMessage("Auxiliary fuel tanks destroyed, 300 fuel units lost");
+                    restart(false);  // Respawn without resetting score
+                }
+                else {
+                    renderMessage("Out of fuel, game over!");
+                    currentState = GAME_OVER;
+                }
+            }
+            else if (rocket->hasLanded()) {
+                score += 100;  // Immediately update score when landed
+                renderMessage("Landing Successful!");
+                restart(false);  // Respawn without resetting score
+            }
+        }
     }
 }
 
@@ -73,23 +111,56 @@ void Game::render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
-    landscape->render(renderer, viewX);
-    rocket->render();
+    if (currentState == MENU) {
+        renderText(renderer, "Click to Start", font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2);
+        renderText(renderer, "Use Arrow Keys to Control", font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 + 40);
+    }
+    else if (currentState == PLAYING) {
+        landscape->render(renderer, viewX);
+        rocket->render();
+        renderHUD(renderer, *rocket);
 
-    renderHUD(renderer, *rocket);
+        // Only render "Low Fuel!" message if it's visible
+        if (lowFuelMessageVisible) {
+            renderText(renderer, "Low Fuel!", font, { 255, 0, 0, 255 }, SCREEN_WIDTH / 2 - 60, SCREEN_HEIGHT / 2);
+        }
+    }
+    else if (currentState == GAME_OVER) {
+        renderText(renderer, "Game Over!", font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 80, SCREEN_HEIGHT / 2);
+        renderText(renderer, "Final Score: " + std::to_string(score), font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 80, SCREEN_HEIGHT / 2 + 40);
+    }
 
     SDL_RenderPresent(renderer);
 }
 
+
+void Game::renderMessage(const std::string& message) {
+    SDL_Color color = { 255, 255, 255, 255 };
+    renderText(renderer, message, font, color, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2);
+    SDL_RenderPresent(renderer);
+    SDL_Delay(2000);
+}
+
+void Game::restart(bool fullRestart) {
+    rocket->reset();
+
+    if (fullRestart) {
+        score = 0;
+        rocket->setFuel(2000);
+        currentState = MENU;
+    }
+
+    std::cout << "Game Restarted" << std::endl;
+}
+
 void Game::renderHUD(SDL_Renderer* renderer, Rocket& rocket) {
-    SDL_Color textColor = { 255, 255, 255, 255 }; // White color
+    SDL_Color textColor = { 255, 255, 255, 255 };
     std::string altitudeText = "Altitude: " + std::to_string((int)rocket.getAltitude(landscape->lines));
     std::string vertSpeedText = "V Speed: " + std::to_string((int)rocket.getVelocity().y);
     std::string horSpeedText = "H Speed: " + std::to_string((int)rocket.getVelocity().x);
     std::string scoreText = "Score: " + std::to_string(score);
     std::string fuelText = "Fuel: " + std::to_string(rocket.getFuel());
     std::string timeText = "Time: " + std::to_string((int)rocket.getTimeElapsed());
-
 
     renderText(renderer, altitudeText, font, textColor, SCREEN_WIDTH - 200, 10);
     renderText(renderer, vertSpeedText, font, textColor, SCREEN_WIDTH - 200, 40);
@@ -111,7 +182,6 @@ void Game::renderText(SDL_Renderer* renderer, const std::string& text, TTF_Font*
 }
 
 void Game::run() {
-
     Uint32 lastTime = SDL_GetTicks();
 
     while (running) {
@@ -137,13 +207,12 @@ void Game::cleanup() {
         landscape = nullptr;
     }
 
-    if (font) { // Clean up font
+    if (font) {
         TTF_CloseFont(font);
         font = nullptr;
     }
 
-    TTF_Quit(); // Quit SDL_ttf
-
+    TTF_Quit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

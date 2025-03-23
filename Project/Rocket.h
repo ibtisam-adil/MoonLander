@@ -27,6 +27,10 @@ public:
     float getTimeElapsed();
     int getFuel();
     Vector2 getVelocity();
+    void reset();
+    bool hasCrashed() const;
+    bool hasLanded() const;
+    void setFuel(int amount);
 
     Vector2 position;
     Vector2 velocity;
