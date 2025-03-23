@@ -134,16 +134,48 @@ void Rocket::crash() {
     std::cout << "Rocket Crashed!" << std::endl;
 }
 
+//void Rocket::render() {
+//    if (!texture) return;
+//
+//    SDL_Rect destRect = { static_cast<int>(position.x) - 10, static_cast<int>(position.y) - 20, 20, 40 };
+//    SDL_RenderCopyEx(renderer, texture, nullptr, &destRect, angle, nullptr, SDL_FLIP_NONE);
+//
+//    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+//    SDL_Rect highlightRect = { static_cast<int>(position.x) - 10, static_cast<int>(position.y) - 20, 20, 40 };
+//    SDL_RenderDrawRect(renderer, &highlightRect);
+//}
+
 void Rocket::render() {
-    if (!texture) return;
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White rocket
 
-    SDL_Rect destRect = { static_cast<int>(position.x) - 10, static_cast<int>(position.y) - 20, 20, 40 };
-    SDL_RenderCopyEx(renderer, texture, nullptr, &destRect, angle, nullptr, SDL_FLIP_NONE);
+    // Define the rocket's triangle points relative to its position
+    Vector2 tip = { position.x, position.y - 20 }; // Top of the rocket
+    Vector2 left = { position.x - 10, position.y + 20 }; // Bottom-left
+    Vector2 right = { position.x + 10, position.y + 20 }; // Bottom-right
 
+    // Rotate the points based on the rocket's angle
+    float radian = angle * M_PI / 180.0f;
+    auto rotatePoint = [&](Vector2 p) {
+        float x = position.x + (p.x - position.x) * cos(radian) - (p.y - position.y) * sin(radian);
+        float y = position.y + (p.x - position.x) * sin(radian) + (p.y - position.y) * cos(radian);
+        return Vector2{ x, y };
+        };
+
+    tip = rotatePoint(tip);
+    left = rotatePoint(left);
+    right = rotatePoint(right);
+
+    // Draw the triangle
+    SDL_RenderDrawLine(renderer, tip.x, tip.y, left.x, left.y);
+    SDL_RenderDrawLine(renderer, left.x, left.y, right.x, right.y);
+    SDL_RenderDrawLine(renderer, right.x, right.y, tip.x, tip.y);
+
+    // Optional: Highlight the bounding box for debugging
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     SDL_Rect highlightRect = { static_cast<int>(position.x) - 10, static_cast<int>(position.y) - 20, 20, 40 };
     SDL_RenderDrawRect(renderer, &highlightRect);
 }
+
 
 float Rocket::getAltitude(const std::vector<LandscapeLine>& lines) {
     float closestGroundY = SCREEN_HEIGHT; 
