@@ -161,6 +161,7 @@
     <ClCompile Include="Landscape.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Rocket.cpp" />
+    <ClCompile Include="Vector2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\plane_2_blue.png" />

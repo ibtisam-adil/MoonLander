@@ -46,15 +46,16 @@ void Game::handleEvents() {
     }
 }
 
-void Game::update() {
-    rocket->handleInput(keys);
-    rocket->update(landscape->lines);
+void Game::update(float deltaTime) {
+    rocket->handleInput(keys, deltaTime);  // Pass deltaTime as the second argument
+    rocket->update(landscape->lines, deltaTime); // Pass deltaTime to update function
 
     if (rocket->hasLandedOrCrashed) {
         SDL_Delay(2000); // Pause for 2 seconds before closing
         running = false;  // Stop the game
     }
 }
+
 
 void Game::render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -67,9 +68,15 @@ void Game::render() {
 }
 
 void Game::run() {
+
+    Uint32 lastTime = SDL_GetTicks();
+
     while (running) {
+        Uint32 currentTime = SDL_GetTicks();
+        float deltaTime = (currentTime - lastTime) / 1000.0f;
+        lastTime = currentTime;
         handleEvents();
-        update();
+        update(deltaTime);
         render();
         SDL_Delay(16);
     }

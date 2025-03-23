@@ -1,10 +1,11 @@
 #include "Rocket.h"
 
 Rocket::Rocket(SDL_Renderer* renderer)
-    : renderer(renderer), texture(nullptr), landed(false), hasLandedOrCrashed(false)
+    : renderer(renderer), texture(nullptr), landed(false), hasLandedOrCrashed(false),
+    fuel(1000), thrustBuild(0.0f)
 {
-    position = { SCREEN_WIDTH / 2.0f, 100 };
-    velocity = { 0, 0 };
+    position = { SCREEN_WIDTH / 4.0f, 100 };
+    velocity = { INITIAL_HORIZONTAL_SPEED, INITIAL_VERTICAL_SPEED };
     angle = 0.0f;
 }
 
@@ -22,6 +23,56 @@ bool Rocket::loadTexture(const char* path) {
     SDL_FreeSurface(surface);
     return texture != nullptr;
 }
+
+void Rocket::handleInput(const Uint8* keys, float deltaTime) {
+    if (keys[SDL_SCANCODE_LEFT]) angle = std::max(angle - ROTATION_SPEED, -90.0f);
+    if (keys[SDL_SCANCODE_RIGHT]) angle = std::min(angle + ROTATION_SPEED, 90.0f);
+
+    if (keys[SDL_SCANCODE_UP] && fuel > 0) {
+        float radian = angle * M_PI / 180.0f;
+        thrustBuild += (THRUST_POWER - thrustBuild) * 0.2f;
+
+        velocity.x += std::sin(radian) * thrustBuild * deltaTime;
+        velocity.y -= std::cos(radian) * thrustBuild * deltaTime; // Reduce vertical speed
+
+        fuel -= 1; // Burn fuel
+
+        // Debugging
+        std::cout << "Applying Thrust - Velocity X: " << velocity.x << " | Velocity Y: " << velocity.y << std::endl;
+    }
+    else {
+        thrustBuild *= 0.9f; // Reduce thrust gradually if not pressing UP
+    }
+}
+
+void Rocket::update(const std::vector<LandscapeLine>& lines, float deltaTime) {
+    if (hasLandedOrCrashed) return;
+
+    if (!landed) {
+        timeElapsed += deltaTime;
+
+        // Always apply gravity: Vertical speed increases by +1 per second
+        velocity.y += 1.0f * deltaTime;
+
+        // Reduce horizontal speed naturally towards 0
+        if (velocity.x > 0) {
+            velocity.x = std::max(0.0f, velocity.x - 1.0f * deltaTime);
+        }
+        else if (velocity.x < 0) {
+            velocity.x = std::min(0.0f, velocity.x + 1.0f * deltaTime);
+        }
+
+        // Apply movement
+        position.x += velocity.x * deltaTime;
+        position.y += velocity.y * deltaTime;
+
+        // Debugging: Print movement values
+        std::cout << "Velocity X: " << velocity.x << " | Velocity Y: " << velocity.y << std::endl;
+
+        checkCollision(lines);
+    }
+}
+
 
 void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
     if (hasLandedOrCrashed) return;
@@ -76,7 +127,7 @@ void Rocket::land() {
 
     velocity = { 0, 0 };
     landed = true;
-    std::cout << "Plane Landed Safely" << std::endl;
+    std::cout << "Rocket Landed Safely" << std::endl;
 }
 
 void Rocket::crash() {
@@ -84,54 +135,19 @@ void Rocket::crash() {
 
     velocity = { 0, 0 };
     hasLandedOrCrashed = true;
-    std::cout << "Plane Crashed" << std::endl;
+    std::cout << "Rocket Crashed!" << std::endl;
 }
-
-void Rocket::handleInput(const Uint8* keys) {
-    if (keys[SDL_SCANCODE_LEFT]) angle = std::max(angle - ROTATION_SPEED, -90.0f);
-    if (keys[SDL_SCANCODE_RIGHT]) angle = std::min(angle + ROTATION_SPEED, 90.0f);
-    if (keys[SDL_SCANCODE_UP]) {
-        float radian = angle * M_PI / 180.0f;
-
-        // Reduce thrust power to make it struggle against gravity
-        velocity.x += std::sin(radian) * (THRUST_POWER * 0.3f); // 30% of original power
-        velocity.y -= std::cos(radian) * (THRUST_POWER * 0.3f);
-    }
-}
-
-void Rocket::update(const std::vector<LandscapeLine>& lines) {
-    if (hasLandedOrCrashed) return;
-    if (!landed) {
-        velocity.y += GRAVITY * 1.1f;  // Increase gravity effect slightly
-
-        // Add a little drag to horizontal movement (prevents floating sideways)
-        velocity.x *= 0.99f;
-
-        position.x += velocity.x;
-        position.y += velocity.y;
-
-        checkCollision(lines);
-    }
-}
-
 
 void Rocket::render() {
     if (!texture) return;
 
     SDL_Rect destRect = { static_cast<int>(position.x) - 10, static_cast<int>(position.y) - 20, 20, 40 };
-
     SDL_RenderCopyEx(renderer, texture, nullptr, &destRect, angle, nullptr, SDL_FLIP_NONE);
 
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); 
-
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     SDL_Rect highlightRect = { static_cast<int>(position.x) - 10, static_cast<int>(position.y) - 20, 20, 40 };
     SDL_RenderDrawRect(renderer, &highlightRect);
-    SDL_RenderDrawLine(renderer, position.x - 10, position.y - 20, position.x + 10, position.y - 20);
-    SDL_RenderDrawLine(renderer, position.x - 10, position.y + 20, position.x + 10, position.y + 20);
-    SDL_RenderDrawLine(renderer, position.x - 10, position.y - 20, position.x - 10, position.y + 20);
-    SDL_RenderDrawLine(renderer, position.x + 10, position.y - 20, position.x + 10, position.y + 20);
 }
-
 
 void Rocket::cleanup() {
     if (texture) {
