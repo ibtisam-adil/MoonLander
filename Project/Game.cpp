@@ -86,7 +86,7 @@ void Game::update(float deltaTime) {
             if (rocket->hasCrashed()) {
                 if (rocket->getFuel() > 300) {
                     rocket->setFuel(rocket->getFuel() - 300);
-                    renderMessage("Auxiliary fuel tanks destroyed, 300 fuel units lost");
+                    renderMessage("300 fuel units lost");
                     restart(false);
                 }
                 else {
@@ -117,7 +117,7 @@ void Game::render() {
     SDL_RenderClear(renderer);
 
     if (currentState == MENU) {
-        renderText(renderer, "Click to Start", font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2);
+        renderText(renderer, "Click to Start", font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 80, SCREEN_HEIGHT / 2);
         renderText(renderer, "Use Arrow Keys to Control", font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 + 40);
     }
     else if (currentState == PLAYING) {
@@ -132,7 +132,7 @@ void Game::render() {
     }
     else if (currentState == GAME_OVER) {
         renderText(renderer, "Game Over!", font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 80, SCREEN_HEIGHT / 2);
-        renderText(renderer, "Final Score: " + std::to_string(score), font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 80, SCREEN_HEIGHT / 2 + 40);
+        renderText(renderer, "Final Score: " + std::to_string(score), font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 90, SCREEN_HEIGHT / 2 + 40);
     }
 
     SDL_RenderPresent(renderer);
