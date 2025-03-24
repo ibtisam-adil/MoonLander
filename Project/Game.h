@@ -42,5 +42,6 @@ private:
 	bool lowFuelMessageVisible = false;  
 	Uint32 lowFuelTimer = 0;  // Timer to control flicker frequency
 	const Uint32 lowFuelFlickerInterval = 500;  // Time in milliseconds for the flicker interval (adjustable)
-
+	Uint32 gameOverTime = 0; // Stores the time when game over happens
+	const Uint32 gameOverDelay = 3000; // 3 seconds delay
 };

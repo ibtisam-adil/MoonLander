@@ -74,38 +74,43 @@ void Game::update(float deltaTime) {
         rocket->handleInput(keys, deltaTime);
         rocket->update(landscape->lines, deltaTime);
 
-        // Check for low fuel and control flickering
         if (rocket->getFuel() < 200) {
             Uint32 currentTime = SDL_GetTicks();
-
-            // Toggle visibility of the "Low Fuel" message at regular intervals (flicker effect)
             if (currentTime - lowFuelTimer >= lowFuelFlickerInterval) {
                 lowFuelMessageVisible = !lowFuelMessageVisible;
-                lowFuelTimer = currentTime;  // Reset the timer
+                lowFuelTimer = currentTime;
             }
         }
 
-        // Check for rocket landing or crash
         if (rocket->hasLandedOrCrashed) {
             if (rocket->hasCrashed()) {
                 if (rocket->getFuel() > 300) {
                     rocket->setFuel(rocket->getFuel() - 300);
                     renderMessage("Auxiliary fuel tanks destroyed, 300 fuel units lost");
-                    restart(false);  // Respawn without resetting score
+                    restart(false);
                 }
                 else {
                     renderMessage("Out of fuel, game over!");
                     currentState = GAME_OVER;
+                    gameOverTime = SDL_GetTicks(); // Store time when game over happens
                 }
             }
             else if (rocket->hasLanded()) {
-                score += 100;  // Immediately update score when landed
+                score += 100;
                 renderMessage("Landing Successful!");
-                restart(false);  // Respawn without resetting score
+                restart(false);
             }
         }
     }
+    else if (currentState == GAME_OVER) {
+        // Wait for 3 seconds before returning to the menu
+        if (SDL_GetTicks() - gameOverTime > gameOverDelay) {
+            restart(true);
+            currentState = MENU;
+        }
+    }
 }
+
 
 void Game::render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
