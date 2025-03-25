@@ -1,9 +1,9 @@
 #pragma once
 #include <vector>
 #include <SDL.h>
-#include "Vector2.h"  // Include the Vector2 header if you have it.
-#include "LandscapeLine.h"  // Include the LandscapeLine header if you have it.
-#include "Star.h"  // Include the Star header if you have it.
+#include "Vector2.h"  
+#include "LandscapeLine.h"
+#include "Star.h"
 
 class Landscape {
 public:

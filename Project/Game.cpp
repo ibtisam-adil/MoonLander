@@ -63,13 +63,22 @@ void Game::handleEvents() {
         else if (event.type == SDL_MOUSEBUTTONDOWN && currentState == MENU) {
             currentState = PLAYING;
         }
-        else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
-            if (currentState == GAME_OVER) {
+        else if (event.type == SDL_KEYDOWN) {
+            if (event.key.keysym.sym == SDLK_r && currentState == GAME_OVER) {
                 restart(true);
+            }
+            else if (event.key.keysym.sym == SDLK_s) {
+                speedMultiplier = 3.0f; 
+            }
+        }
+        else if (event.type == SDL_KEYUP) {
+            if (event.key.keysym.sym == SDLK_s) {
+                speedMultiplier = 1.0f;
             }
         }
     }
 }
+
 
 void Game::update(float deltaTime) {
     if (currentState == PLAYING) {
@@ -123,7 +132,7 @@ void Game::render() {
     }
     else if (currentState == PLAYING) {
         landscape->render(renderer, viewX);
-        rocket->render();
+        rocket->render(font);
         renderHUD(renderer, *rocket);
 
         if (lowFuelMessageVisible) {
@@ -191,14 +200,17 @@ void Game::run() {
 
     while (running) {
         Uint32 currentTime = SDL_GetTicks();
-        float deltaTime = (currentTime - lastTime) / 1000.0f;
+        float deltaTime = ((currentTime - lastTime) / 1000.0f) * speedMultiplier;
         lastTime = currentTime;
+
         handleEvents();
         update(deltaTime);
         render();
-        SDL_Delay(16);
+
+        SDL_Delay(16);  // Keep a stable frame rate
     }
 }
+
 
 void Game::cleanup() {
     if (rocket) {
