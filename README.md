@@ -4,7 +4,6 @@ A 2D Moon Lander game built using **C++** and **SDL2**. The game challenges play
 
 ## 🎮 Features
 - Realistic gravity and thrust mechanics
-- Procedural terrain inspired by CoinMarketCap line charts
 - Smooth physics-based movement
 - Fuel management system
 - Landing and crashing detection
