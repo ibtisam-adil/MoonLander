@@ -5,7 +5,9 @@ enum GameState { MENU, PLAYING, GAME_OVER };
 GameState currentState = MENU;
 
 Game::Game(int screenWidth, int screenHeight)
-    : window(nullptr), renderer(nullptr), rocket(nullptr), landscape(nullptr), running(true), viewX(0), score(0) {
+    : window(nullptr), renderer(nullptr), rocket(nullptr), landscape(nullptr), running(true),
+    viewX(0), score(0), font(nullptr), keys(nullptr), event(0)
+{
 }
 
 Game::~Game() {
