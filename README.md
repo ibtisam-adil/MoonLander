@@ -28,11 +28,11 @@ A 2D Moon Lander game built using **C++** and **SDL2**. The game challenges play
      ```
 3. **Compile the Game**
    ```sh
-   g++ -o moon_lander main.cpp Rocket.cpp LandscapeLine.cpp Vector2.cpp -lSDL2 -lSDL2_image
+   g++ -o MoonLander main.cpp Rocket.cpp LandscapeLine.cpp Vector2.cpp -lSDL2 -lSDL2_image
    ```
 4. **Run the Game**
    ```sh
-   ./moon_lander
+   ./MoonLander
    ```
 
 ## 🎮 Controls
