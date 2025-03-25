@@ -12,8 +12,8 @@ A 2D Moon Lander game built using **C++** and **SDL2**. The game challenges play
 ## 🛠️ Installation & Setup
 1. **Clone the Repository**
    ```sh
-   git clone https://github.com/yourusername/moon-lander-game.git
-   cd moon-lander-game
+   https://github.com/ibtisam-adil/MoonLander.git
+   cd MoonLander
    ```
 2. **Install Dependencies**
    Ensure you have SDL2 and SDL2_image installed:
