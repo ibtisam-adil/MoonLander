@@ -76,8 +76,8 @@ void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
     for (const auto& line : lines) {
         if (lineIntersectsRocket(line)) {
             bool isLandingZone = line.landable;
-            const float ANGLE_TOLERANCE = 2.0f; // Allow ±2 degrees margin
-            const float SPEED_TOLERANCE = 2.0f; // Allow a small margin
+            const float ANGLE_TOLERANCE = 2.0f;
+            const float SPEED_TOLERANCE = 2.0f;
 
             bool isAngleSafe = std::fabs(angle) <= (10.0f + ANGLE_TOLERANCE);
             bool isSpeedSafe = velocity.y < (25.0f + SPEED_TOLERANCE);
@@ -191,7 +191,7 @@ void Rocket::render() {
     SDL_RenderDrawLine(renderer, cockpitTop.x, cockpitTop.y, cockpitBottom.x, cockpitBottom.y);
 
     if (thrustBuild > 0) {
-        int flameHeight = static_cast<int>(thrustBuild * 4); // Adjusted flame size
+        int flameHeight = static_cast<int>(thrustBuild * 4);
         int maxFlameHeight = 10;
         flameHeight = std::min(flameHeight, maxFlameHeight);
 
@@ -204,7 +204,6 @@ void Rocket::render() {
         SDL_RenderDrawLine(renderer, thrusterRight.x, thrusterRight.y, flameTip.x, flameTip.y);
     }
 
-    // Reset color to default white
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 }
 
