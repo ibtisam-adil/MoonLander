@@ -32,6 +32,7 @@ private:
 	Rocket* rocket;
 	Landscape* landscape;
 
+	float speedMultiplier = 1.0f;
 	bool running;
 	int score = 0;
 	SDL_Event event;

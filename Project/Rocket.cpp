@@ -46,107 +46,7 @@ void Rocket::handleInput(const Uint8* keys, float deltaTime) {
     }
 }
 
-void Rocket::update(const std::vector<LandscapeLine>& lines, float deltaTime) {
-    if (hasLandedOrCrashed) return;
-
-    if (!landed) {
-        timeElapsed += deltaTime;
-
-        velocity.y += 5.5f * deltaTime;
-
-        if (velocity.x > 0) {
-            velocity.x = std::max(0.0f, velocity.x - 1.0f * deltaTime);
-        }
-        else if (velocity.x < 0) {
-            velocity.x = std::min(0.0f, velocity.x + 1.0f * deltaTime);
-        }
-
-        position.x += velocity.x * deltaTime;
-        position.y += velocity.y * deltaTime;
-
-
-        checkCollision(lines);
-    }
-}
-
-
-void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
-    if (hasLandedOrCrashed) return;
-
-    for (const auto& line : lines) {
-        if (lineIntersectsRocket(line)) {
-            bool isLandingZone = line.landable;
-            const float ANGLE_TOLERANCE = 2.0f; // Allow ±2 degrees margin
-            const float SPEED_TOLERANCE = 2.0f; // Allow a small margin
-
-            bool isAngleSafe = std::fabs(angle) <= (10.0f + ANGLE_TOLERANCE);
-            bool isSpeedSafe = velocity.y < (25.0f + SPEED_TOLERANCE);
-
-
-            if (isLandingZone && isAngleSafe && isSpeedSafe) {
-                land();
-                std::cout << " Landed successfully on a safe zone!" << std::endl;
-            }
-            else {
-                std::cout << " Crash detected!" << std::endl;
-
-                if (!isLandingZone) {
-                    std::cout << "You landed on non-landable terrain!" << std::endl;
-                }
-                if (!isAngleSafe) {
-                    std::cout << "Angle too steep! Your angle: " << angle << " (Limit: +- 15)" << std::endl;
-                }
-                if (!isSpeedSafe) {
-                    std::cout << "Speed too high! Your vertical speed: " << velocity.y << " (Limit: < 25.0)" << std::endl;
-                }
-
-                crash();
-            }
-            return;
-        }
-    }
-}
-
-bool Rocket::lineIntersectsRocket(const LandscapeLine& line) {
-    int rocketWidth = 6;
-    int rocketHeight = 12;
-
-    Vector2 bottomLeft = { position.x - rocketWidth / 2, position.y + rocketHeight / 2 };
-    Vector2 bottomRight = { position.x + rocketWidth / 2, position.y + rocketHeight / 2 };
-
-    return pointIsBelowLine(bottomLeft, line) || pointIsBelowLine(bottomRight, line);
-}
-
-
-bool Rocket::pointIsBelowLine(const Vector2& point, const LandscapeLine& line) {
-    float t = (point.x - line.p1.x) / (line.p2.x - line.p1.x);
-    if (t < 0 || t > 1) return false;
-
-    float yOnLine = line.p1.y + t * (line.p2.y - line.p1.y);
-    return point.y >= yOnLine;
-}
-
-void Rocket::land() {
-    if (landed) return;
-
-    velocity = { 0, 0 };
-    landed = true;
-    hasLandedOrCrashed = true;
-    std::cout << "Rocket Landed Safely" << std::endl;
-
-    SDL_Delay(2000);
-}
-
-
-void Rocket::crash() {
-    if (hasLandedOrCrashed) return;
-
-    velocity = { 0, 0 };
-    hasLandedOrCrashed = true;
-    std::cout << "Rocket Crashed!" << std::endl;
-}
-
-void Rocket::render() {
+void Rocket::render(TTF_Font* font) {
    int width = 6;  
     int height = 12;
 
@@ -191,7 +91,7 @@ void Rocket::render() {
     SDL_RenderDrawLine(renderer, cockpitTop.x, cockpitTop.y, cockpitBottom.x, cockpitBottom.y);
 
     if (thrustBuild > 0) {
-        int flameHeight = static_cast<int>(thrustBuild * 4); // Adjusted flame size
+        int flameHeight = static_cast<int>(thrustBuild * 4);
         int maxFlameHeight = 10;
         flameHeight = std::min(flameHeight, maxFlameHeight);
 
@@ -204,10 +104,125 @@ void Rocket::render() {
         SDL_RenderDrawLine(renderer, thrusterRight.x, thrusterRight.y, flameTip.x, flameTip.y);
     }
 
-    // Reset color to default white
+    renderCrashMessages(font, renderer);
+
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 }
 
+void Rocket::update(const std::vector<LandscapeLine>& lines, float deltaTime) {
+    if (hasLandedOrCrashed) return;
+
+    if (!landed) {
+        timeElapsed += deltaTime;
+
+        velocity.y += 5.5f * deltaTime;
+
+        if (velocity.x > 0) {
+            velocity.x = std::max(0.0f, velocity.x - 1.0f * deltaTime);
+        }
+        else if (velocity.x < 0) {
+            velocity.x = std::min(0.0f, velocity.x + 1.0f * deltaTime);
+        }
+
+        position.x += velocity.x * deltaTime;
+        position.y += velocity.y * deltaTime;
+
+
+        checkCollision(lines);
+    }
+}
+
+void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
+    if (hasLandedOrCrashed) return;
+
+    for (const auto& line : lines) {
+        if (lineIntersectsRocket(line)) {
+            bool isLandingZone = line.landable;
+            const float ANGLE_TOLERANCE = 2.0f;
+            const float SPEED_TOLERANCE = 2.0f;
+
+            bool isAngleSafe = std::fabs(angle) <= (10.0f + ANGLE_TOLERANCE);
+            bool isSpeedSafe = velocity.y < (25.0f + SPEED_TOLERANCE);
+
+            crashReasons.clear(); // Clear previous crash reasons
+
+            if (isLandingZone && isAngleSafe && isSpeedSafe) {
+                land();
+            }
+            else {
+                if (!isLandingZone) {
+                    crashReasons.push_back("You landed on non-landable terrain!");
+                }
+                if (!isAngleSafe) {
+                    crashReasons.push_back("Angle too steep! Angle: " + std::to_string(angle) + " (Limit: +-15)");
+                }
+                if (!isSpeedSafe) {
+                    crashReasons.push_back("Speed too high! Speed: " + std::to_string(velocity.y) + " (Limit: < 25.0)");
+                }
+
+                crash();
+            }
+            return;
+        }
+    }
+}
+
+bool Rocket::lineIntersectsRocket(const LandscapeLine& line) {
+    int rocketWidth = 6;
+    int rocketHeight = 12;
+
+    Vector2 bottomLeft = { position.x - rocketWidth / 2, position.y + rocketHeight / 2 };
+    Vector2 bottomRight = { position.x + rocketWidth / 2, position.y + rocketHeight / 2 };
+
+    return pointIsBelowLine(bottomLeft, line) || pointIsBelowLine(bottomRight, line);
+}
+
+bool Rocket::pointIsBelowLine(const Vector2& point, const LandscapeLine& line) {
+    float t = (point.x - line.p1.x) / (line.p2.x - line.p1.x);
+    if (t < 0 || t > 1) return false;
+
+    float yOnLine = line.p1.y + t * (line.p2.y - line.p1.y);
+    return point.y >= yOnLine;
+}
+
+void Rocket::renderCrashMessages(TTF_Font* font, SDL_Renderer* renderer) {
+    if (!hasLandedOrCrashed || crashReasons.empty()) return;
+
+    SDL_Color color = { 255, 0, 0, 255 }; // Red text for crash messages
+    int yOffset = 20;
+
+    for (const auto& reason : crashReasons) {
+        SDL_Surface* surface = TTF_RenderText_Solid(font, reason.c_str(), color);
+        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+        SDL_Rect dstRect = { 50, yOffset, surface->w, surface->h };
+        SDL_RenderCopy(renderer, texture, nullptr, &dstRect);
+
+        yOffset += 25; // Move to the next line
+
+        SDL_FreeSurface(surface);
+        SDL_DestroyTexture(texture);
+    }
+}
+
+void Rocket::land() {
+    if (landed) return;
+
+    velocity = { 0, 0 };
+    landed = true;
+    hasLandedOrCrashed = true;
+    std::cout << "Rocket Landed Safely" << std::endl;
+
+    SDL_Delay(2000);
+}
+
+void Rocket::crash() {
+    if (hasLandedOrCrashed) return;
+
+    velocity = { 0, 0 };
+    hasLandedOrCrashed = true;
+    std::cout << "Rocket Crashed!" << std::endl;
+}
 
 float Rocket::getAltitude(const std::vector<LandscapeLine>& lines) {
     float closestGroundY = SCREEN_HEIGHT; 
@@ -254,7 +269,6 @@ void Rocket::reset() {
 
     std::cout << "Rocket has been reset to its initial state." << std::endl;
 }
-
 
 void Rocket::cleanup() {
     if (texture) {

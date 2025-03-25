@@ -1,32 +1,27 @@
 #include "Landscape.h"
-#include <SDL.h>  // For SDL_Renderer and related functions
-#include <cstdlib>  // For rand()
+#include <SDL.h>  
+#include <cstdlib>  
 
-// Constructor
 Landscape::Landscape(int screenWidth) {
-    scale = screenWidth / 600.0f;  // Adjust scaling to match the screen width
+    scale = screenWidth / 600.0f;
     setupData();
     adjustPoints();
     generateLines();
     generateStars();
 }
 
-// Render function for drawing landscape
 void Landscape::render(SDL_Renderer* renderer, int viewX) {
     int offset = 0;
 
-    // Ensure landscape covers the entire screen width
     while (viewX - offset > rightEdge) offset += rightEdge;
     while (viewX - offset < 0) offset -= rightEdge;
 
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
-    // Render lines
     for (size_t i = 0; i < lines.size(); i++) {
         Vector2 p1 = { lines[i].p1.x + offset, lines[i].p1.y };
         Vector2 p2 = { lines[i].p2.x + offset, lines[i].p2.y };
 
-        // Change color based on whether the line is landable
         if (lines[i].landable) {
             SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); // Green for landing zones
         }
@@ -49,7 +44,6 @@ void Landscape::render(SDL_Renderer* renderer, int viewX) {
     }
 }
 
-// Set up initial data points for the landscape
 void Landscape::setupData() {
     points = {
         {0.5, 355.55}, {5.45, 355.55}, {6.45, 359.4}, {11.15, 359.4}, {12.1, 363.65},
@@ -78,7 +72,7 @@ void Landscape::setupData() {
         {305.0, 290.0}, {308.0, 295.0}, {311.0, 300.0}, {315.0, 305.0}, {320.0, 310.0},
         {323.0, 315.0}, {327.0, 320.0}, {331.0, 325.0}, {335.0, 330.0}, {341.0, 335.0},
 
-        // Another landing zone
+        //landing zone
         {344.0, 335.0}, {348.0, 335.0}, {351.0, 335.0},
 
         {360.0, 330.0}, {365.0, 325.0}, {369.0, 310.0}, {372.0, 315.0}, {375.0, 320.0},
@@ -88,7 +82,7 @@ void Landscape::setupData() {
         {445.0, 350.0}, {450.0, 350.0}, {455.0, 340.0}, {460.0, 320.0}, {465.0, 310.0},
         {470.0, 300.0}, {475.0, 290.0}, {480.0, 285.0}, {485.0, 280.0}, {490.0, 275.0},
 
-        //// Final landing platform at the bottom
+        //// Final landing zone
         {530.0, 325.0}, {538.0, 325.0},
 
         {550.0, 300.0}, {555.0, 302.0}, {560.0, 304.0}, {565.0, 295.0}, {570.0, 300.0},
@@ -97,12 +91,10 @@ void Landscape::setupData() {
     };
 }
 
-// Adjust points by scaling and positioning
 void Landscape::adjustPoints() {
     float minX = points[0].x, maxX = points[0].x;
     float minY = points[0].y, maxY = points[0].y;
 
-    // Scale and track min/max Y values
     for (auto& p : points) {
         p.x *= scale;
         p.y *= scale;
@@ -112,28 +104,25 @@ void Landscape::adjustPoints() {
         if (p.y > maxY) maxY = p.y;
     }
 
-    // Shift all points so that the lowest point (maxY) touches the bottom of the screen
     float yOffset = SCREEN_HEIGHT - maxY;
     for (auto& p : points) {
-        p.x -= minX;  // Align leftmost point to x = 0
-        p.y += yOffset; // Shift down so the lowest point is at SCREEN_HEIGHT
+        p.x -= minX;  
+        p.y += yOffset; 
     }
 
     rightEdge = maxX - minX;
 }
 
-// Generate lines based on the points
 void Landscape::generateLines() {
-    const float minLandingWidth = 80.0f; // Reduced width to allow more landable zones
+    const float minLandingWidth = 80.0f;
 
     for (size_t i = 1; i < points.size(); i++) {
         bool isFlat = (points[i - 1].y == points[i].y);
 
-        // Allow more landing zones by reducing the width requirement
         if (isFlat && (points[i].x - points[i - 1].x >= minLandingWidth)) {
             lines.emplace_back(points[i - 1], points[i]);
-            lines.back().landable = true;  // Make it a landing zone
-            lines.back().multiplier = 2;   // Bonus for landing on these zones
+            lines.back().landable = true;  
+            lines.back().multiplier = 2;
         }
         else {
             lines.emplace_back(points[i - 1], points[i]);
@@ -141,10 +130,9 @@ void Landscape::generateLines() {
     }
 }
 
-// Generate stars based on lines
 void Landscape::generateStars() {
     for (const auto& line : lines) {
-        if (rand() % 10 < 1) { // 10% chance to generate a star
+        if (rand() % 10 < 1) {
             float starX = line.p1.x;
             float starY = (rand() % SCREEN_HEIGHT);
             if (starY < line.p1.y && starY < line.p2.y) {
