@@ -48,8 +48,7 @@ A 2D Moon Lander game built using **C++** and **SDL2**. The game challenges play
 - 🌕 More varied terrains
 - 🔥 Enhanced visual effects
 
-  📝 Inspiration
-
+##📝 Inspiration
 This game was inspired by Seb Lee-Delisle's Moon Lander. While the core idea remains similar, this project is an independent implementation built from scratch using C++ and SDL2, with additional mechanics and features.
 
 ## 🤝 Contributing
