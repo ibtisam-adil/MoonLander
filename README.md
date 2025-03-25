@@ -1,6 +1,6 @@
 # 🚀 Moon Lander Game
 
-A 2D Moon Lander game built using **C++** and **SDL2**. The game challenges players to land a rocket safely on a landscape while managing fuel and avoiding crashes.
+A 2D Moon Lander game built using **C++** and **SDL2**. The game challenges players to land a rocket safely on a moon Land while managing fuel and avoiding crashes.
 
 ## 🎮 Features
 - Realistic gravity and thrust mechanics
@@ -9,10 +9,13 @@ A 2D Moon Lander game built using **C++** and **SDL2**. The game challenges play
 - Landing and crashing detection
 - Simple but effective visual effects
 
+## 📝 Inspiration
+This game was inspired by [Seb Lee-Delisle's Moon Lander](http://moonlander.seb.ly/). While the core idea remains similar, this project is an independent implementation built from scratch using C++ and SDL2, with additional mechanics and features.
+
 ## 🛠️ Installation & Setup
 1. **Clone the Repository**
    ```sh
-   https://github.com/ibtisam-adil/MoonLander.git
+   git clone https://github.com/ibtisam-adil/MoonLander.git
    cd MoonLander
    ```
 2. **Install Dependencies**
@@ -42,14 +45,10 @@ A 2D Moon Lander game built using **C++** and **SDL2**. The game challenges play
 | Right Arrow | Rotate Right |
 | Up Arrow    | Apply Thrust |
 
-
 ## 🛠️ Planned Features
 - 🚀 Different difficulty modes
 - 🌕 More varied terrains
 - 🔥 Enhanced visual effects
-
-##📝 Inspiration
-This game was inspired by Seb Lee-Delisle's Moon Lander. While the core idea remains similar, this project is an independent implementation built from scratch using C++ and SDL2, with additional mechanics and features.
 
 ## 🤝 Contributing
 Feel free to submit issues and pull requests to improve the game!
@@ -59,3 +58,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 Made with ❤️ by **Ibtisam Adil**
+
