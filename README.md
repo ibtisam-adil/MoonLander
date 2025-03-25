@@ -42,14 +42,11 @@ A 2D Moon Lander game built using **C++** and **SDL2**. The game challenges play
 | Right Arrow | Rotate Right |
 | Up Arrow    | Apply Thrust |
 
-## 📷 Screenshots
-*(Include screenshots of gameplay here)*
 
 ## 🛠️ Planned Features
 - 🚀 Different difficulty modes
 - 🌕 More varied terrains
 - 🔥 Enhanced visual effects
-- 🎵 Sound effects & music
 
 ## 🤝 Contributing
 Feel free to submit issues and pull requests to improve the game!
@@ -58,4 +55,4 @@ Feel free to submit issues and pull requests to improve the game!
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-Made with ❤️ by **Your Name**
+Made with ❤️ by **Ibtisam Adil**
