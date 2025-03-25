@@ -42,7 +42,6 @@ A 2D Moon Lander game built using **C++** and **SDL2**. The game challenges play
 | Left Arrow  | Rotate Left |
 | Right Arrow | Rotate Right |
 | Up Arrow    | Apply Thrust |
-| R          | Reset Game |
 
 ## 📷 Screenshots
 *(Include screenshots of gameplay here)*
