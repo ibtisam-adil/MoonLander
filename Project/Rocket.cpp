@@ -2,7 +2,7 @@
 
 Rocket::Rocket(SDL_Renderer* renderer)
     : renderer(renderer), texture(nullptr), landed(false), hasLandedOrCrashed(false),
-    fuel(2000), thrustBuild(0.0f)
+    timeElapsed(0.0f), fuel(2000), thrustBuild(0.0f)
 {
     position = { 100, 100 };
     velocity = { INITIAL_HORIZONTAL_SPEED, INITIAL_VERTICAL_SPEED };
@@ -52,10 +52,8 @@ void Rocket::update(const std::vector<LandscapeLine>& lines, float deltaTime) {
     if (!landed) {
         timeElapsed += deltaTime;
 
-        // Always apply gravity: Vertical speed increases by +1 per second
         velocity.y += 5.5f * deltaTime;
 
-        // Reduce horizontal speed naturally towards 0
         if (velocity.x > 0) {
             velocity.x = std::max(0.0f, velocity.x - 1.0f * deltaTime);
         }
@@ -63,7 +61,6 @@ void Rocket::update(const std::vector<LandscapeLine>& lines, float deltaTime) {
             velocity.x = std::min(0.0f, velocity.x + 1.0f * deltaTime);
         }
 
-        // Apply movement
         position.x += velocity.x * deltaTime;
         position.y += velocity.y * deltaTime;
 
@@ -111,11 +108,9 @@ void Rocket::checkCollision(const std::vector<LandscapeLine>& lines) {
 }
 
 bool Rocket::lineIntersectsRocket(const LandscapeLine& line) {
-    // Define a smaller collision box that ignores the flame
     int rocketWidth = 6;
-    int rocketHeight = 12;  // Only the body, ignoring the flame
+    int rocketHeight = 12;
 
-    // Get bottom corners of the rocket body (not the flame)
     Vector2 bottomLeft = { position.x - rocketWidth / 2, position.y + rocketHeight / 2 };
     Vector2 bottomRight = { position.x + rocketWidth / 2, position.y + rocketHeight / 2 };
 
@@ -152,12 +147,11 @@ void Rocket::crash() {
 }
 
 void Rocket::render() {
-   int width = 6;  // Smaller width
-    int height = 12; // Smaller height
+   int width = 6;  
+    int height = 12;
 
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White spaceship
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
-    // Define a smaller spaceship shape
     Vector2 top = { position.x, position.y - height / 2 };
     Vector2 bottomLeft = { position.x - width / 2, position.y + height / 2 };
     Vector2 bottomRight = { position.x + width / 2, position.y + height / 2 };
@@ -186,20 +180,16 @@ void Rocket::render() {
     cockpitTop = rotatePoint(cockpitTop);
     cockpitBottom = rotatePoint(cockpitBottom);
 
-    // Draw main spaceship body
     SDL_RenderDrawLine(renderer, top.x, top.y, bottomLeft.x, bottomLeft.y);
     SDL_RenderDrawLine(renderer, bottomLeft.x, bottomLeft.y, bottomRight.x, bottomRight.y);
     SDL_RenderDrawLine(renderer, bottomRight.x, bottomRight.y, top.x, top.y);
 
-    // Draw wings
     SDL_RenderDrawLine(renderer, bottomLeft.x, bottomLeft.y, wingLeft.x, wingLeft.y);
     SDL_RenderDrawLine(renderer, bottomRight.x, bottomRight.y, wingRight.x, wingRight.y);
 
-    // Draw cockpit
-    SDL_SetRenderDrawColor(renderer, 0, 191, 255, 255); // Light blue cockpit
+    SDL_SetRenderDrawColor(renderer, 0, 191, 255, 255); 
     SDL_RenderDrawLine(renderer, cockpitTop.x, cockpitTop.y, cockpitBottom.x, cockpitBottom.y);
 
-    // **FLAME ROTATION FIX**
     if (thrustBuild > 0) {
         int flameHeight = static_cast<int>(thrustBuild * 4); // Adjusted flame size
         int maxFlameHeight = 10;
@@ -254,8 +244,8 @@ void Rocket::setFuel(int amount) {
 }
 
 void Rocket::reset() {
-    position = { 100, 100 };  // Reset to initial position
-    velocity = { INITIAL_HORIZONTAL_SPEED, INITIAL_VERTICAL_SPEED }; // Reset velocity
+    position = { 100, 100 }; 
+    velocity = { INITIAL_HORIZONTAL_SPEED, INITIAL_VERTICAL_SPEED };
     angle = 0.0f;
     landed = false;
     hasLandedOrCrashed = false;

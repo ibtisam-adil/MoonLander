@@ -40,8 +40,8 @@ private:
 	const int SCREEN_WIDTH = 1200;
 	const int SCREEN_HEIGHT = 800;
 	bool lowFuelMessageVisible = false;  
-	Uint32 lowFuelTimer = 0;  // Timer to control flicker frequency
-	const Uint32 lowFuelFlickerInterval = 500;  // Time in milliseconds for the flicker interval (adjustable)
-	Uint32 gameOverTime = 0; // Stores the time when game over happens
-	const Uint32 gameOverDelay = 3000; // 3 seconds delay
+	Uint32 lowFuelTimer = 0;
+	const Uint32 lowFuelFlickerInterval = 500;
+	Uint32 gameOverTime = 0;
+	const Uint32 gameOverDelay = 3000;
 };

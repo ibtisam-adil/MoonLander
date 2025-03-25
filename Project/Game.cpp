@@ -63,7 +63,7 @@ void Game::handleEvents() {
         }
         else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
             if (currentState == GAME_OVER) {
-                restart(true);  // Full restart when in Game Over screen
+                restart(true);
             }
         }
     }
@@ -92,7 +92,7 @@ void Game::update(float deltaTime) {
                 else {
                     renderMessage("Out of fuel, game over!");
                     currentState = GAME_OVER;
-                    gameOverTime = SDL_GetTicks(); // Store time when game over happens
+                    gameOverTime = SDL_GetTicks();
                 }
             }
             else if (rocket->hasLanded()) {
@@ -103,7 +103,6 @@ void Game::update(float deltaTime) {
         }
     }
     else if (currentState == GAME_OVER) {
-        // Wait for 3 seconds before returning to the menu
         if (SDL_GetTicks() - gameOverTime > gameOverDelay) {
             restart(true);
             currentState = MENU;
@@ -125,7 +124,6 @@ void Game::render() {
         rocket->render();
         renderHUD(renderer, *rocket);
 
-        // Only render "Low Fuel!" message if it's visible
         if (lowFuelMessageVisible) {
             renderText(renderer, "Low Fuel!", font, { 255, 0, 0, 255 }, SCREEN_WIDTH / 2 - 60, SCREEN_HEIGHT / 2);
         }
