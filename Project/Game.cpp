@@ -5,7 +5,9 @@ enum GameState { MENU, PLAYING, GAME_OVER };
 GameState currentState = MENU;
 
 Game::Game(int screenWidth, int screenHeight)
-    : window(nullptr), renderer(nullptr), rocket(nullptr), landscape(nullptr), running(true), viewX(0), score(0) {
+    : window(nullptr), renderer(nullptr), rocket(nullptr), landscape(nullptr), running(true),
+    viewX(0), score(0), font(nullptr), keys(nullptr), event(0)
+{
 }
 
 Game::~Game() {
@@ -63,7 +65,7 @@ void Game::handleEvents() {
         }
         else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
             if (currentState == GAME_OVER) {
-                restart(true);  // Full restart when in Game Over screen
+                restart(true);
             }
         }
     }
@@ -74,45 +76,49 @@ void Game::update(float deltaTime) {
         rocket->handleInput(keys, deltaTime);
         rocket->update(landscape->lines, deltaTime);
 
-        // Check for low fuel and control flickering
         if (rocket->getFuel() < 200) {
             Uint32 currentTime = SDL_GetTicks();
-
-            // Toggle visibility of the "Low Fuel" message at regular intervals (flicker effect)
             if (currentTime - lowFuelTimer >= lowFuelFlickerInterval) {
                 lowFuelMessageVisible = !lowFuelMessageVisible;
-                lowFuelTimer = currentTime;  // Reset the timer
+                lowFuelTimer = currentTime;
             }
         }
 
-        // Check for rocket landing or crash
         if (rocket->hasLandedOrCrashed) {
             if (rocket->hasCrashed()) {
                 if (rocket->getFuel() > 300) {
                     rocket->setFuel(rocket->getFuel() - 300);
-                    renderMessage("Auxiliary fuel tanks destroyed, 300 fuel units lost");
-                    restart(false);  // Respawn without resetting score
+                    renderMessage("300 fuel units lost");
+                    restart(false);
                 }
                 else {
                     renderMessage("Out of fuel, game over!");
                     currentState = GAME_OVER;
+                    gameOverTime = SDL_GetTicks();
                 }
             }
             else if (rocket->hasLanded()) {
-                score += 100;  // Immediately update score when landed
+                score += 100;
                 renderMessage("Landing Successful!");
-                restart(false);  // Respawn without resetting score
+                restart(false);
             }
         }
     }
+    else if (currentState == GAME_OVER) {
+        if (SDL_GetTicks() - gameOverTime > gameOverDelay) {
+            restart(true);
+            currentState = MENU;
+        }
+    }
 }
+
 
 void Game::render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
     if (currentState == MENU) {
-        renderText(renderer, "Click to Start", font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2);
+        renderText(renderer, "Click to Start", font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 80, SCREEN_HEIGHT / 2);
         renderText(renderer, "Use Arrow Keys to Control", font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 + 40);
     }
     else if (currentState == PLAYING) {
@@ -120,14 +126,13 @@ void Game::render() {
         rocket->render();
         renderHUD(renderer, *rocket);
 
-        // Only render "Low Fuel!" message if it's visible
         if (lowFuelMessageVisible) {
             renderText(renderer, "Low Fuel!", font, { 255, 0, 0, 255 }, SCREEN_WIDTH / 2 - 60, SCREEN_HEIGHT / 2);
         }
     }
     else if (currentState == GAME_OVER) {
         renderText(renderer, "Game Over!", font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 80, SCREEN_HEIGHT / 2);
-        renderText(renderer, "Final Score: " + std::to_string(score), font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 80, SCREEN_HEIGHT / 2 + 40);
+        renderText(renderer, "Final Score: " + std::to_string(score), font, { 255, 255, 255, 255 }, SCREEN_WIDTH / 2 - 90, SCREEN_HEIGHT / 2 + 40);
     }
 
     SDL_RenderPresent(renderer);
