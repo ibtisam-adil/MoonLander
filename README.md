@@ -1,6 +1,6 @@
 # 🚀 Moon Lander Game
 
-A 2D Moon Lander game built using **C++** and **SDL2**. The game challenges players to land a rocket safely on a procedurally generated terrain while managing fuel and avoiding crashes.
+A 2D Moon Lander game built using **C++** and **SDL2**. The game challenges players to land a rocket safely on a landscape while managing fuel and avoiding crashes.
 
 ## 🎮 Features
 - Realistic gravity and thrust mechanics
