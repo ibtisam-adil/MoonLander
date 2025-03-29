@@ -56,5 +56,3 @@ Feel free to submit issues and pull requests to improve the game!
 ## 📜 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
----
-Made with ❤️ by **Ibtisam Adil**
